@@ -1,0 +1,2021 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بوابة إدارة الشركات والأسطول المتكاملة</title>
+    <!-- Tailwind CSS لتقديم تصميم عصري واحترافي -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js للمخططات البيانية التفاعلية -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome للأيقونات المميزة -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap');
+        body {
+            font-family: 'Cairo', sans-serif;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- نظام التنبيهات المخصص (Toast Notification) لتجنب alert البوب أب المزعجة -->
+    <div id="toast-box" class="fixed top-5 left-5 z-50 transform translate-x-[-150%] transition-transform duration-300 ease-in-out">
+        <div id="toast-bg" class="bg-emerald-600 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center space-x-3 space-x-reverse">
+            <span id="toast-icon" class="text-xl"><i class="fas fa-check-circle"></i></span>
+            <div>
+                <p id="toast-message" class="font-bold text-sm">تمت العملية بنجاح!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 1. شاشة تسجيل دخول الشركات (LOGIN SCREEN) -->
+    <section id="auth-section" class="flex-grow flex items-center justify-center p-4 bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-950">
+        <div class="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-6 md:p-8 max-w-md w-full border border-white/20">
+            <div class="text-center mb-8">
+                <div class="inline-flex bg-emerald-500/10 text-emerald-500 p-3 rounded-2xl mb-3">
+                    <i class="fas fa-building-shield fa-2x"></i>
+                </div>
+                <h2 class="text-2xl font-black text-slate-900">بوابة إدارة الشركات الموحدة</h2>
+                <p class="text-xs text-slate-500 mt-1.5">سجل دخولك للوصول إلى لوحة التحكم والبيانات الخاصة بشركتك</p>
+            </div>
+
+            <!-- تبديل نوع العملية (دخول / تسجيل شركة جديدة) -->
+            <div class="flex bg-slate-100 p-1 rounded-lg mb-6 text-xs font-bold">
+                <button onclick="toggleAuthTab('login')" id="tab-login-btn" class="flex-1 py-2.5 rounded-md text-center bg-white text-slate-900 shadow-sm transition">تسجيل الدخول</button>
+                <button onclick="toggleAuthTab('register')" id="tab-register-btn" class="flex-1 py-2.5 rounded-md text-center text-slate-500 transition">تسجيل شركة جديدة</button>
+            </div>
+
+            <!-- نموذج تسجيل الدخول -->
+            <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4 text-xs font-bold text-slate-700">
+                <div>
+                    <label class="block mb-1.5">اسم مستخدم الشركة (أو البريد)</label>
+                    <div class="relative">
+                        <input type="text" id="login-username" required placeholder="مثال: falcon" class="w-full p-3 pr-10 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50">
+                        <i class="fas fa-user absolute left-3 top-3.5 text-slate-400"></i>
+                    </div>
+                </div>
+                <div>
+                    <label class="block mb-1.5">كلمة المرور السرية</label>
+                    <div class="relative">
+                        <input type="password" id="login-password" required placeholder="••••••••" class="w-full p-3 pr-10 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50">
+                        <i class="fas fa-lock absolute left-3 top-3.5 text-slate-400"></i>
+                    </div>
+                </div>
+                <button type="submit" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-extrabold transition shadow-lg shadow-emerald-600/20">
+                    دخول إلى لوحة التحكم <i class="fas fa-arrow-left mr-1"></i>
+                </button>
+            </form>
+
+            <!-- نموذج تسجيل شركة جديدة -->
+            <form id="register-form" onsubmit="handleRegister(event)" class="space-y-4 text-xs font-bold text-slate-700 hidden">
+                <div>
+                    <label class="block mb-1.5">اسم الشركة الرسمي</label>
+                    <input type="text" id="reg-company-name" required placeholder="مثال: شركة النخبة التجارية" class="w-full p-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50">
+                </div>
+                <div>
+                    <label class="block mb-1.5">اسم المستخدم للشركة (بالإنجليزي - فريد)</label>
+                    <input type="text" id="reg-username" required placeholder="مثال: elite" class="w-full p-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50">
+                </div>
+                <div>
+                    <label class="block mb-1.5">كلمة المرور</label>
+                    <input type="password" id="reg-password" required placeholder="••••••••" class="w-full p-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50">
+                </div>
+                <button type="submit" class="w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-extrabold transition shadow-lg">
+                    إنشاء حساب الشركة والبدء فوراً <i class="fas fa-plus mr-1"></i>
+                </button>
+            </form>
+
+            <!-- حسابات ديمو تجريبية سريعة للفصل بين البيانات والشركات -->
+            <div class="mt-6 pt-6 border-t border-slate-100 text-center">
+                <p class="text-[10px] text-slate-400 mb-2">حسابات تجريبية جاهزة للاختبار الفوري والفصل بين البيانات:</p>
+                <div class="flex justify-center gap-2">
+                    <button onclick="fillDemo('falcon')" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[10px] px-2.5 py-1.5 rounded-lg border border-emerald-200 transition">
+                        شركة الصقر (البيانات أ)
+                    </button>
+                    <button onclick="fillDemo('gulf')" class="bg-blue-50 hover:bg-blue-100 text-blue-800 text-[10px] px-2.5 py-1.5 rounded-lg border border-blue-200 transition">
+                        مؤسسة الخليج (البيانات ب)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 2. الهيكل الرئيسي للنظام (MAIN SYSTEM APPLICATION - Hidden by Default) -->
+    <div id="app-section" class="hidden flex-grow flex flex-col lg:flex-row">
+        
+        <!-- الشريط الجانبي (Sidebar) -->
+        <aside class="w-full lg:w-64 bg-slate-900 text-slate-300 flex-shrink-0 border-l border-slate-800 flex flex-col justify-between">
+            <div>
+                <!-- هوية الشركة النشطة المسجلة حالياً -->
+                <div class="p-6 border-b border-slate-800 bg-slate-950/40 text-center">
+                    <div class="w-12 h-12 bg-emerald-500 text-white rounded-2xl mx-auto flex items-center justify-center font-black text-xl shadow-lg mb-2" id="active-company-logo">
+                        ص
+                    </div>
+                    <h2 class="text-sm font-black text-white" id="active-company-name">اسم الشركة النشطة</h2>
+                    <p class="text-[10px] text-emerald-400 mt-0.5"><i class="fas fa-circle text-[8px] animate-pulse ml-1"></i>قاعدة بيانات معزولة وآمنة</p>
+                </div>
+
+                <!-- أزرار التنقل بين الشيتات المختلفة -->
+                <nav class="p-2 space-y-1 text-xs font-bold" id="main-navigation">
+                    <button onclick="switchTab('dashboard')" class="tab-btn w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-lg text-right transition bg-emerald-600 text-white" id="btn-dashboard">
+                        <i class="fas fa-tachometer-alt w-5 text-center"></i>
+                        <span>لوحة التحكم الرئيسية</span>
+                    </button>
+                    <button onclick="switchTab('employees')" class="tab-btn w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-lg text-right text-slate-400 hover:bg-slate-800" id="btn-employees">
+                        <i class="fas fa-users w-5 text-center"></i>
+                        <span>بيانات الموظفين</span>
+                    </button>
+                    <button onclick="switchTab('vehicles')" class="tab-btn w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-lg text-right text-slate-400 hover:bg-slate-800" id="btn-vehicles">
+                        <i class="fas fa-car w-5 text-center"></i>
+                        <span>إدارة المركبات والسيارات</span>
+                    </button>
+                    <button onclick="switchTab('contracts')" class="tab-btn w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-lg text-right text-slate-400 hover:bg-slate-800" id="btn-contracts">
+                        <i class="fas fa-file-contract w-5 text-center"></i>
+                        <span>متابعة العقود والالتزامات</span>
+                    </button>
+                    <button onclick="switchTab('orders')" class="tab-btn w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-lg text-right text-slate-400 hover:bg-slate-800" id="btn-orders">
+                        <i class="fas fa-shipping-fast w-5 text-center"></i>
+                        <span>متابعة الطلبات والتوصيل</span>
+                    </button>
+                    <button onclick="switchTab('profile')" class="tab-btn w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-lg text-right text-slate-400 hover:bg-slate-800" id="btn-profile">
+                        <i class="fas fa-user-id w-5 text-center"></i>
+                        <span>ملف الموظف الشامل</span>
+                    </button>
+                    <button onclick="switchTab('financials')" class="tab-btn w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-lg text-right text-slate-400 hover:bg-slate-800" id="btn-financials">
+                        <i class="fas fa-calculator w-5 text-center"></i>
+                        <span>التحصيل المالي والأرباح</span>
+                    </button>
+                    <button onclick="switchTab('word-exporter')" class="tab-btn w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-lg text-right text-slate-400 hover:bg-slate-800" id="btn-word-exporter">
+                        <i class="fas fa-file-word w-5 text-emerald-400 text-center"></i>
+                        <span class="text-emerald-400">بوابة تصدير ملفات Word</span>
+                    </button>
+                </nav>
+            </div>
+
+            <!-- معلومات الإقامات والتنبيهات وزر الخروج السريع -->
+            <div class="p-4 border-t border-slate-800 bg-slate-950/20">
+                <div class="bg-slate-800/50 p-3 rounded-lg text-center mb-3">
+                    <p class="text-[10px] text-slate-400 font-bold">تنبيهات عاجلة للشركة</p>
+                    <div class="flex justify-center space-x-2 space-x-reverse mt-1">
+                        <span class="bg-rose-500/20 text-rose-400 px-2 py-0.5 rounded text-[10px] font-bold" id="badge-expiring-residencies">0 إقامات</span>
+                        <span class="bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded text-[10px] font-bold" id="badge-expiring-insurances">0 تأمينات</span>
+                    </div>
+                </div>
+                <button onclick="handleLogout()" class="w-full py-2.5 bg-rose-600/10 hover:bg-rose-600 text-rose-400 hover:text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-2">
+                    <i class="fas fa-sign-out-alt"></i> تسجيل خروج آمن
+                </button>
+            </div>
+        </aside>
+
+        <!-- مساحة العمل الرئيسية والتبويبات -->
+        <main class="flex-grow p-4 md:p-6 lg:p-8 overflow-y-auto max-w-full custom-scrollbar">
+
+            <!-- 1. لوحة التحكم الرئيسية (DASHBOARD) -->
+            <section id="tab-dashboard" class="space-y-6">
+                <!-- بطاقات الـ KPIs لبيانات الشركة الحالية -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-slate-500 font-bold">موظفي شركتنا</p>
+                            <h3 class="text-2xl font-black mt-1 text-slate-800" id="stat-total-employees">0</h3>
+                        </div>
+                        <div class="bg-blue-50 text-blue-600 p-3 rounded-lg"><i class="fas fa-user-tie fa-lg"></i></div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-slate-500 font-bold">السيارات والعهود</p>
+                            <h3 class="text-2xl font-black mt-1 text-slate-800" id="stat-total-vehicles">0</h3>
+                        </div>
+                        <div class="bg-emerald-50 text-emerald-600 p-3 rounded-lg"><i class="fas fa-car fa-lg"></i></div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-slate-500 font-bold">عقودنا النشطة</p>
+                            <h3 class="text-2xl font-black mt-1 text-slate-800" id="stat-active-contracts">0</h3>
+                        </div>
+                        <div class="bg-purple-50 text-purple-600 p-3 rounded-lg"><i class="fas fa-file-signature fa-lg"></i></div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-slate-500 font-bold">أرباح الشركة المتوقعة</p>
+                            <h3 class="text-2xl font-black mt-1 text-emerald-600" id="stat-net-profit">0 د.ك</h3>
+                        </div>
+                        <div class="bg-emerald-50 text-emerald-600 p-3 rounded-lg"><i class="fas fa-wallet fa-lg"></i></div>
+                    </div>
+                </div>
+
+                <!-- الرسوم البيانية للشركة -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 lg:col-span-2">
+                        <h4 class="text-sm font-black text-slate-800 mb-4"><i class="fas fa-chart-bar text-emerald-600 ml-2"></i>حركة الحسابات المالية والرواتب والمصروفات الخاصة بنا</h4>
+                        <div class="h-60 relative">
+                            <canvas id="financialChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                        <h4 class="text-sm font-black text-slate-800 mb-4"><i class="fas fa-tasks text-emerald-600 ml-2"></i>توزيع الحالات والمهام</h4>
+                        <div class="h-60 relative flex items-center justify-center">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- التنبيهات العاجلة للشركة -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                        <h4 class="text-sm font-black text-slate-800 mb-4 text-rose-600"><i class="fas fa-exclamation-triangle ml-2"></i>تنبيهات عاجلة للشركة (الإقامات والتأمين)</h4>
+                        <div class="space-y-3 max-h-60 overflow-y-auto custom-scrollbar" id="dashboard-alerts-container">
+                            <!-- تنبيهات الشركة ستظهر هنا -->
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                        <div>
+                            <h4 class="text-sm font-black text-slate-800 mb-2"><i class="fas fa-shield-halved text-emerald-600 ml-2"></i>الفصل الأمني للبيانات</h4>
+                            <p class="text-xs text-slate-500 leading-relaxed mb-4">هذه اللوحة محمية وتعمل بنظام تشفير محلي وسحابي كامل. لا يمكن لأي شركة أخرى مسجلة في هذا النظام الاطلاع على جداول موظفيك أو تفاصيل عقودك المالية تحت أي ظرف.</p>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-xl text-center">
+                            <span class="text-[10px] text-slate-400 block font-bold">هوية الشركة البرمجية للاتصال السحابي:</span>
+                            <span class="font-mono font-black text-xs text-emerald-700 bg-white px-3 py-1.5 rounded-md mt-1.5 inline-block" id="company-raw-id">ID</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. شيت الموظفين (EMPLOYEES) -->
+            <section id="tab-employees" class="hidden space-y-4">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                    <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                        <div>
+                            <h3 class="text-md font-black text-slate-800"><i class="fas fa-users text-emerald-600 ml-2"></i>جدول موظفي الشركة</h3>
+                            <p class="text-xs text-slate-400 mt-1">إدارة شاملة لملفات وتفاصيل الإقامات والتأمين الصحي وسيارات العهدة المخصصة للعمل</p>
+                        </div>
+                        <div class="flex gap-2 w-full md:w-auto">
+                            <!-- محرك البحث الخاص بكل شيت -->
+                            <input type="text" id="search-employees" oninput="filterEmployees()" placeholder="ابحث باسم الموظف، الرقم المدني..." class="px-4 py-2 border border-slate-200 rounded-lg text-xs w-full md:w-64 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <button onclick="openEmployeeModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 whitespace-nowrap transition">
+                                <i class="fas fa-user-plus"></i> إضافة موظف جديد
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-right text-xs border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-600 border-b border-slate-200">
+                                    <th class="p-3 font-black">رقم الموظف</th>
+                                    <th class="p-3 font-black">اسم الموظف</th>
+                                    <th class="p-3 font-black">الرقم المدني</th>
+                                    <th class="p-3 font-black">المسمى الوظيفي</th>
+                                    <th class="p-3 font-black">رقم التلفون</th>
+                                    <th class="p-3 font-black">انتهاء الإقامة</th>
+                                    <th class="p-3 font-black">انتهاء التأمين الصحي</th>
+                                    <th class="p-3 font-black">لوحة السيارة</th>
+                                    <th class="p-3 font-black">الراتب (د.ك)</th>
+                                    <th class="p-3 font-black text-center">العمليات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="employees-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. شيت المركبات (VEHICLES) -->
+            <section id="tab-vehicles" class="hidden space-y-4">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                    <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                        <div>
+                            <h3 class="text-md font-black text-slate-800"><i class="fas fa-car text-emerald-600 ml-2"></i>إدارة الأسطول وسيارات الشركة</h3>
+                            <p class="text-xs text-slate-400 mt-1">متابعة صيانة السيارات، كروت الصحة للسيارات، والعدادات والتأمين</p>
+                        </div>
+                        <div class="flex gap-2 w-full md:w-auto">
+                            <!-- محرك البحث الخاص بجدول السيارات -->
+                            <input type="text" id="search-vehicles" oninput="filterVehicles()" placeholder="ابحث برقم اللوحة، الموديل..." class="px-4 py-2 border border-slate-200 rounded-lg text-xs w-full md:w-64 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <button onclick="openVehicleModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 whitespace-nowrap transition">
+                                <i class="fas fa-plus"></i> إضافة مركبة للأسطول
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-right text-xs border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-600 border-b border-slate-200">
+                                    <th class="p-3 font-black">رقم</th>
+                                    <th class="p-3 font-black">رقم اللوحة</th>
+                                    <th class="p-3 font-black">موديل السيارة</th>
+                                    <th class="p-3 font-black">انتهاء التأمين</th>
+                                    <th class="p-3 font-black">تاريخ كرت الصحي</th>
+                                    <th class="p-3 font-black">العداد الحالي (كم)</th>
+                                    <th class="p-3 font-black">آخر صيانة</th>
+                                    <th class="p-3 font-black">ملاحظات صيانة مركبة</th>
+                                    <th class="p-3 font-black">ملاحظات عامة</th>
+                                    <th class="p-3 font-black text-center">العمليات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vehicles-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. شيت متابعة العقود (CONTRACTS) -->
+            <section id="tab-contracts" class="hidden space-y-4">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                    <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                        <div>
+                            <h3 class="text-md font-black text-slate-800"><i class="fas fa-file-contract text-emerald-600 ml-2"></i>دفتر متابعة عقود الشركة</h3>
+                            <p class="text-xs text-slate-400 mt-1">إحصاء العقود مع الجهات الحكومية والخاصة، الدفعات المستحقة والمتبقية</p>
+                        </div>
+                        <div class="flex gap-2 w-full md:w-auto">
+                            <!-- محرك البحث الخاص بالعقود والجهات -->
+                            <input type="text" id="search-contracts" oninput="filterContracts()" placeholder="ابحث برقم العقد، اسم الجهة..." class="px-4 py-2 border border-slate-200 rounded-lg text-xs w-full md:w-64 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <button onclick="openContractModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 whitespace-nowrap transition">
+                                <i class="fas fa-file-medical"></i> تسجيل عقد جديد
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-right text-xs border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-600 border-b border-slate-200">
+                                    <th class="p-3 font-black">رقم العقد</th>
+                                    <th class="p-3 font-black">الجهة المتعاقدة</th>
+                                    <th class="p-3 font-black">مدة العقد</th>
+                                    <th class="p-3 font-black">من تاريخ</th>
+                                    <th class="p-3 font-black">إلى تاريخ</th>
+                                    <th class="p-3 font-black">عدد الدفعات</th>
+                                    <th class="p-3 font-black">أول دفعة</th>
+                                    <th class="p-3 font-black">الدفعة القادمة</th>
+                                    <th class="p-3 font-black">المبلغ الإجمالي</th>
+                                    <th class="p-3 font-black">المستحق</th>
+                                    <th class="p-3 font-black">المتبقي</th>
+                                    <th class="p-3 font-black text-center">الحالة</th>
+                                    <th class="p-3 font-black text-center">العمليات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="contracts-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5. شيت الطلبات (ORDERS) -->
+            <section id="tab-orders" class="hidden space-y-4">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                    <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                        <div>
+                            <h3 class="text-md font-black text-slate-800"><i class="fas fa-shipping-fast text-emerald-600 ml-2"></i>جدول متابعة طلبات التوصيل اليومية</h3>
+                            <p class="text-xs text-slate-400 mt-1">تتبع رحلات النقل والتسليم مع السائق واللوحة والمبالغ المحصلة</p>
+                        </div>
+                        <div class="flex gap-2 w-full md:w-auto">
+                            <!-- محرك البحث الخاص بالطلبات والرحلات -->
+                            <input type="text" id="search-orders" oninput="filterOrders()" placeholder="ابحث باسم السائق، اللوحة..." class="px-4 py-2 border border-slate-200 rounded-lg text-xs w-full md:w-64 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <button onclick="openOrderModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 whitespace-nowrap transition">
+                                <i class="fas fa-plus"></i> إضافة طلب توصيل
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-right text-xs border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-600 border-b border-slate-200">
+                                    <th class="p-3 font-black">رقم</th>
+                                    <th class="p-3 font-black">الجهة المقدمة للطلب</th>
+                                    <th class="p-3 font-black">تفاصيل الطلب</th>
+                                    <th class="p-3 font-black">استلام من</th>
+                                    <th class="p-3 font-black">تسليم إلى</th>
+                                    <th class="p-3 font-black">موعد الاستلام والتسليم</th>
+                                    <th class="p-3 font-black">المبلغ (د.ك)</th>
+                                    <th class="p-3 font-black">السائق المسؤول</th>
+                                    <th class="p-3 font-black">لوحة السيارة</th>
+                                    <th class="p-3 font-black text-center">حالة الطلب</th>
+                                    <th class="p-3 font-black text-center">العمليات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orders-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 6. ملف الموظف الشامل (EMPLOYEE PROFILE) -->
+            <section id="tab-profile" class="hidden space-y-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                    <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 border-b border-slate-100 pb-4">
+                        <div>
+                            <h3 class="text-md font-black text-slate-800"><i class="fas fa-user-id text-emerald-600 ml-2"></i>ملف الموظف الفردي الشامل</h3>
+                            <p class="text-xs text-slate-400 mt-1">اعرض ملخصاً تفصيلياً متكاملاً لأي موظف بشركتك بكافة عهوده وتواريخه للطباعة والمتابعة</p>
+                        </div>
+                        <div class="w-full md:w-80">
+                            <label class="block text-xs font-bold text-slate-500 mb-1">اختر الموظف المستهدف</label>
+                            <select id="profile-employee-selector" onchange="loadEmployeeProfile()" class="w-full p-2.5 border border-slate-200 rounded-lg text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                                <!-- سيتم الملء ديناميكياً حسب موظفي الشركة النشطة فقط -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- ورقة تفاصيل ملف الموظف المصممة بدقة للطباعة أو التصدير -->
+                    <div class="border border-slate-150 rounded-xl p-6 bg-slate-50 relative overflow-hidden" id="employee-profile-card">
+                        <div class="flex flex-col md:flex-row justify-between items-start gap-6 relative z-10">
+                            <div class="flex items-center space-x-4 space-x-reverse">
+                                <div class="w-16 h-16 bg-emerald-600 text-white rounded-full flex items-center justify-center font-black text-2xl shadow-md border-4 border-white">
+                                    <span id="prof-initials">م</span>
+                                </div>
+                                <div>
+                                    <h2 class="text-xl font-black text-slate-800" id="prof-name">اسم الموظف غير محدد</h2>
+                                    <p class="text-emerald-700 font-bold text-xs mt-1 flex items-center gap-1">
+                                        <i class="fas fa-briefcase"></i> <span id="prof-position">المسمى الوظيفي</span>
+                                    </p>
+                                    <p class="text-[10px] text-slate-400 mt-1">رقم المعرف الفريد داخل النظام: <span id="prof-id" class="font-mono font-bold">#</span></p>
+                                </div>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-150 text-left w-full md:w-auto self-stretch flex flex-col justify-center">
+                                <span class="text-[10px] text-slate-400 font-bold block">الراتب الأساسي المعتمد</span>
+                                <span class="text-xl font-black text-slate-800" id="prof-salary">0 د.ك</span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+                            <!-- القسم الشخصي -->
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-150">
+                                <h4 class="text-xs font-black text-slate-700 border-b border-slate-100 pb-2 mb-3"><i class="fas fa-user-circle text-emerald-500 ml-2"></i>بيانات الاتصال والهوية</h4>
+                                <ul class="space-y-3 text-[11px] font-bold">
+                                    <li class="flex justify-between"><span class="text-slate-400">الرقم المدني:</span> <span class="font-bold text-slate-800" id="prof-civil">-</span></li>
+                                    <li class="flex justify-between"><span class="text-slate-400">رقم الهاتف:</span> <span class="font-bold text-slate-800" id="prof-phone">-</span></li>
+                                    <li class="flex justify-between"><span class="text-slate-400">إجمالي مهام التوصيل:</span> <span class="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded" id="prof-orders-count">0 طلب</span></li>
+                                </ul>
+                            </div>
+
+                            <!-- المركبة والعهدة -->
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-150">
+                                <h4 class="text-xs font-black text-slate-700 border-b border-slate-100 pb-2 mb-3"><i class="fas fa-car-side text-emerald-500 ml-2"></i>المركبة والعهدة المستلمة</h4>
+                                <ul class="space-y-3 text-[11px] font-bold">
+                                    <li class="flex justify-between"><span class="text-slate-400">رقم لوحة العهدة:</span> <span class="font-bold text-emerald-700" id="prof-car-plate">-</span></li>
+                                    <li class="flex justify-between"><span class="text-slate-400">نوع/موديل السيارة:</span> <span class="font-bold text-slate-800" id="prof-car-model">-</span></li>
+                                    <li class="flex justify-between"><span class="text-slate-400">عداد المسافة:</span> <span class="font-bold text-slate-800" id="prof-car-odom">-</span></li>
+                                </ul>
+                            </div>
+
+                            <!-- التواريخ والإنذارات -->
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-150">
+                                <h4 class="text-xs font-black text-slate-700 border-b border-slate-100 pb-2 mb-3"><i class="fas fa-calendar-alt text-emerald-500 ml-2"></i>التواريخ والوثائق الحيوية</h4>
+                                <ul class="space-y-3 text-[11px] font-bold">
+                                    <li class="flex justify-between"><span class="text-slate-400">انتهاء الإقامة:</span> <span class="font-bold rounded px-1.5 py-0.5" id="prof-res-expiry">-</span></li>
+                                    <li class="flex justify-between"><span class="text-slate-400">انتهاء التأمين الصحي:</span> <span class="font-bold" id="prof-ins-expiry">-</span></li>
+                                    <li class="flex justify-between"><span class="text-slate-400">حالة الإقامة:</span> <span id="prof-res-status" class="font-bold">-</span></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end space-x-2 space-x-reverse mt-6 pt-4 border-t border-slate-200">
+                            <button onclick="window.print()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 rounded-lg text-xs font-bold text-slate-700 transition">
+                                <i class="fas fa-print ml-1"></i> طباعة كشف البيانات
+                            </button>
+                            <button onclick="exportSingleEmployeeWord()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition">
+                                <i class="fas fa-file-word ml-1"></i> تصدير لملف Word
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 7. شيت التحصيل المالي (FINANCIALS) -->
+            <section id="tab-financials" class="hidden space-y-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                    <h3 class="text-md font-black text-slate-800 mb-1"><i class="fas fa-coins text-emerald-600 ml-2"></i>كشف الميزانية والتحصيل المالي الخاص بالشركة</h3>
+                    <p class="text-xs text-slate-400 mb-6">يتم رصد حسابات الإيرادات والرواتب والصيانة لشركتك فقط وعرض ميزان المراجعة والأرباح الصافية</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                        <div class="bg-emerald-50 border border-emerald-100 p-4 rounded-xl">
+                            <span class="text-xs text-emerald-800 font-bold block">إجمالي الإيرادات (العقود + الطلبات)</span>
+                            <span class="text-2xl font-black text-emerald-700 block mt-1" id="fin-total-revenue">0 د.ك</span>
+                        </div>
+                        <div class="bg-rose-50 border border-rose-100 p-4 rounded-xl">
+                            <span class="text-xs text-rose-800 font-bold block">كشف الرواتب الشهري المعتمد</span>
+                            <span class="text-2xl font-black text-rose-700 block mt-1" id="fin-total-salaries">0 د.ك</span>
+                        </div>
+                        <div class="bg-amber-50 border border-amber-100 p-4 rounded-xl">
+                            <span class="text-xs text-amber-800 font-bold block">تكاليف صيانة وتشغيل السيارات</span>
+                            <span class="text-2xl font-black text-amber-700 block mt-1" id="fin-total-expenses">0 د.ك</span>
+                        </div>
+                        <div class="bg-slate-900 text-white p-4 rounded-xl">
+                            <span class="text-xs text-emerald-400 font-bold block">صافي الأرباح التشغيلية المتوقعة</span>
+                            <span class="text-2xl font-black text-emerald-400 block mt-1" id="fin-net-profit">0 د.ك</span>
+                        </div>
+                    </div>
+
+                    <div class="border border-slate-150 rounded-xl overflow-hidden text-xs">
+                        <div class="bg-slate-50 p-4 border-b border-slate-150 font-black text-slate-750">
+                            بنود الميزانية العمومية للشركة الحالية
+                        </div>
+                        <div class="p-4 space-y-3 font-bold text-slate-700">
+                            <div class="flex justify-between py-2 border-b border-slate-100">
+                                <span>(+) إجمالي مبالغ العقود المستحقة للتحصيل</span>
+                                <span class="text-emerald-600" id="fin-detail-contract-revenue">0 د.ك</span>
+                            </div>
+                            <div class="flex justify-between py-2 border-b border-slate-100">
+                                <span>(+) إيرادات وعوائد رحلات توصيل الطلبات</span>
+                                <span class="text-emerald-600" id="fin-detail-order-revenue">0 د.ك</span>
+                            </div>
+                            <div class="flex justify-between py-2 border-b border-slate-100">
+                                <span>(-) كشف الرواتب والمخصصات للموظفين</span>
+                                <span class="text-rose-600" id="fin-detail-salaries-expense">0 د.ك</span>
+                            </div>
+                            <div class="flex justify-between py-2 border-b border-slate-100">
+                                <span>(-) مخصص صيانة سيارات الأسطول (75 د.ك تقديري لكل سيارة نشطة)</span>
+                                <span class="text-rose-500" id="fin-detail-maintenance-expense">0 د.ك</span>
+                            </div>
+                            <div class="flex justify-between py-3 border-t-2 border-slate-200 font-black text-sm text-slate-900 bg-slate-50 px-2 rounded">
+                                <span>صافي الميزانية والأرباح النهائية للشركة</span>
+                                <span class="text-emerald-700" id="fin-detail-net-profit">0 د.ك</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 8. بوابة تصدير ملفات Word (WORD EXPORTER) -->
+            <section id="tab-word-exporter" class="hidden space-y-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                    <h3 class="text-md font-black text-slate-800 mb-1"><i class="fas fa-file-word text-blue-600 ml-2"></i>توليد وطباعة مستندات Word لشركتك</h3>
+                    <p class="text-xs text-slate-400 mb-6">احصل على مستندات مجهزة بشعار وتفاصيل شركتك المسجلة حالياً لتفتح مباشرة على برنامج Microsoft Word</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- نموذج تصدير عقد -->
+                        <div class="border border-slate-200 p-5 rounded-xl bg-slate-50">
+                            <div class="text-blue-600 mb-3"><i class="fas fa-file-signature fa-2x"></i></div>
+                            <h4 class="font-bold text-slate-800 text-sm mb-2">طباعة وتصدير العقود</h4>
+                            <p class="text-[11px] text-slate-400 mb-4">تصدير العقد المحدد ليكون بصيغة مستند رسمي ومطابق قانونياً جاهز للتعديل والطباعة المباشرة.</p>
+                            <div class="space-y-3 mb-4">
+                                <label class="block text-[10px] font-bold text-slate-500">اختر العقد المطلوب</label>
+                                <select id="word-contract-selector" class="w-full p-2 border border-slate-300 rounded text-xs bg-white font-bold">
+                                    <!-- سيتم الملء ديناميكياً -->
+                                </select>
+                            </div>
+                            <button onclick="exportContractToWord()" class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-bold transition flex items-center justify-center gap-1">
+                                <i class="fas fa-download"></i> تصدير العقد إلى Word (.doc)
+                            </button>
+                        </div>
+
+                        <!-- إقرار عهدة سيارة -->
+                        <div class="border border-slate-200 p-5 rounded-xl bg-slate-50">
+                            <div class="text-emerald-600 mb-3"><i class="fas fa-key fa-2x"></i></div>
+                            <h4 class="font-bold text-slate-800 text-sm mb-2">محضر تسليم عهدة سيارة</h4>
+                            <p class="text-[11px] text-slate-400 mb-4">إنشاء محضر استلام سيارة عهدة بكافة مواصفاتها المعتمدة لتوقيع السائق والمسؤول بالشركة.</p>
+                            <div class="space-y-3 mb-4">
+                                <label class="block text-[10px] font-bold text-slate-500">اختر السائق المستلم</label>
+                                <select id="word-employee-car-selector" class="w-full p-2 border border-slate-300 rounded text-xs bg-white font-bold">
+                                    <!-- سيتم الملء ديناميكياً -->
+                                </select>
+                            </div>
+                            <button onclick="exportVehicleHandoverToWord()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-bold transition flex items-center justify-center gap-1">
+                                <i class="fas fa-download"></i> تصدير إقرار العهدة إلى Word
+                            </button>
+                        </div>
+
+                        <!-- كشف الموظفين الإجمالي والمالي -->
+                        <div class="border border-slate-200 p-5 rounded-xl bg-slate-50">
+                            <div class="text-purple-600 mb-3"><i class="fas fa-file-invoice-dollar fa-2x"></i></div>
+                            <h4 class="font-bold text-slate-800 text-sm mb-2">التقرير المالي وكشوف الموظفين</h4>
+                            <p class="text-[11px] text-slate-400 mb-4">استخراج كشف حسابي كامل ببيانات جميع موظفي الشركة وحساب الرواتب الإجمالي لتقديمه للإدارة العليا.</p>
+                            <div class="bg-purple-50 text-purple-800 p-2.5 rounded text-[10px] font-bold mb-4">
+                                سيقوم النظام بإرفاق شعار شركتك النشطة وحساباتها تلقائياً بالملف.
+                            </div>
+                            <button onclick="exportFinancialSummaryToWord()" class="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white rounded text-xs font-bold transition flex items-center justify-center gap-1">
+                                <i class="fas fa-download"></i> تصدير التقرير المالي الشامل
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- ======================== النوافذ المنبثقة لإضافة وتعديل البيانات (MODALS) ======================== -->
+    
+    <!-- مودال الموظف -->
+    <div id="employee-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl shadow-lg max-w-lg w-full overflow-hidden">
+            <div class="bg-slate-900 text-white p-4 flex justify-between items-center">
+                <h3 class="font-bold text-xs" id="employee-modal-title">إضافة موظف جديد</h3>
+                <button onclick="closeEmployeeModal()" class="text-white hover:text-gray-200"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="employee-form" onsubmit="saveEmployee(event)" class="p-5 space-y-4 text-[11px] font-bold text-slate-700">
+                <input type="hidden" id="emp-index">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block mb-1 text-slate-500">اسم الموظف</label>
+                        <input type="text" id="emp-name" required class="w-full p-2 border border-slate-200 rounded">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-slate-500">الرقم المدني (12 رقم)</label>
+                        <input type="text" id="emp-civil" required class="w-full p-2 border border-slate-200 rounded font-mono">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block mb-1 text-slate-500">المسمى الوظيفي</label>
+                        <input type="text" id="emp-position" required class="w-full p-2 border border-slate-200 rounded">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-slate-500">رقم الهاتف</label>
+                        <input type="text" id="emp-phone" required class="w-full p-2 border border-slate-200 rounded font-mono">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block mb-1 text-slate-500">تاريخ انتهاء الإقامة</label>
+                        <input type="date" id="emp-res-expiry" required class="w-full p-2 border border-slate-200 rounded font-mono">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-slate-500">تاريخ انتهاء التأمين الصحي</label>
+                        <input type="date" id="emp-ins-expiry" required class="w-full p-2 border border-slate-200 rounded font-mono">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block mb-1 text-slate-500">لوحة السيارة المسندة</label>
+                        <select id="emp-car-plate" class="w-full p-2 border border-slate-200 rounded bg-white">
+                            <!-- المتاح لسيارات الشركة النشطة -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-slate-500">الراتب الشهري (د.ك)</label>
+                        <input type="number" id="emp-salary" required class="w-full p-2 border border-slate-200 rounded font-mono">
+                    </div>
+                </div>
+                <div>
+                    <label class="block mb-1 text-slate-500">ملاحظة</label>
+                    <textarea id="emp-note" rows="2" class="w-full p-2 border border-slate-200 rounded"></textarea>
+                </div>
+                <div class="flex justify-end space-x-2 space-x-reverse pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeEmployeeModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg">إلغاء</button>
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg">حفظ البيانات</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- مودال السيارة -->
+    <div id="vehicle-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl shadow-lg max-w-lg w-full overflow-hidden">
+            <div class="bg-slate-900 text-white p-4 flex justify-between items-center">
+                <h3 class="font-bold text-xs" id="vehicle-modal-title">إضافة مركبة</h3>
+                <button onclick="closeVehicleModal()" class="text-white hover:text-gray-200"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="vehicle-form" onsubmit="saveVehicle(event)" class="p-5 space-y-4 text-[11px] font-bold text-slate-700">
+                <input type="hidden" id="veh-index">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block mb-1 text-slate-500">رقم لوحة السيارة</label>
+                        <input type="text" id="veh-plate" required class="w-full p-2 border border-slate-200 rounded font-mono">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-slate-500">موديل السيارة ونوعها</label>
+                        <input type="text" id="veh-model" required class="w-full p-2 border border-slate-200 rounded">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block mb-1 text-slate-500">تاريخ انتهاء تأمين السيارة</label>
+                        <input type="date" id="veh-ins-expiry" required class="w-full p-2 border border-slate-200 rounded font-mono">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-slate-500">تاريخ كرت الصحي للسيارة</label>
+                        <input type="date" id="veh-health-card" required class="w-full p-2 border border-slate-200 rounded font-mono">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block mb-1 text-slate-500">عداد المسافة الحالي (كم)</label>
+                        <input type="number" id="veh-odom" required class="w-full p-2 border border-slate-200 rounded font-mono">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-slate-500">تاريخ آخر صيانة</label>
+                        <input type="date" id="veh-last-maint" required class="w-full p-2 border border-slate-200 rounded font-mono">
+                    </div>
+                </div>
+                <div>
+                    <label class="block mb-1 text-slate-500">ملاحظات صيانة مركبة والقطع المستبدلة</label>
+                    <textarea id="veh-maint-notes" rows="2" class="w-full p-2 border border-slate-200 rounded"></textarea>
+                </div>
+                <div>
+                    <label class="block mb-1 text-slate-500">ملاحظات عامة</label>
+                    <textarea id="veh-notes" rows="2" class="w-full p-2 border border-slate-200 rounded"></textarea>
+                </div>
+                <div class="flex justify-end space-x-2 space-x-reverse pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeVehicleModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg">إلغاء</button>
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg">حفظ المركبة</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- مودال العقد -->
+    <div id="contract-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl shadow-lg max-w-lg w-full overflow-hidden">
+            <div class="bg-slate-900 text-white p-4 flex justify-between items-center">
+                <h3 class="font-bold text-xs" id="contract-modal-title">تسجيل عقد جديد</h3>
+                <button onclick="closeContractModal()" class="text-white hover:text-gray-200"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="contract-form" onsubmit="saveContract(event)" class="p-5 space-y-4 text-[11px] font-bold text-slate-700">
+                <input type="hidden" id="con-index">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block mb-1 text-slate-500">رقم العقد</label>
+                        <input type="text" id="con-num" required class="w-full p-2 border border-slate-200 rounded font-mono">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-slate-500">الجهة المتعاقدة</label>
+                        <input type="text" id="con-entity" required class="w-full p-2 border border-slate-200 rounded">
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                    <div>
+                        <label class="block mb-1 text-slate-500">المدة</label>
+                        <input type="text" id="con-duration" required class="w-full p-2 border border-slate-200 rounded" placeholder="مثال: سنة">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-slate-500">من تاريخ</label>
+                        <input type="date" id="con-from" required class="w-full p-2 border border-slate-200 rounded font-mono">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-slate-500">إلى تاريخ</label>
+                        <input type="date" id="con-to" required class="w-full p-2 border border-slate-200 rounded font-mono">
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                    <div>
+                        <label class="block mb-1 text-slate-500">عدد الدفعات</label>
+                        <input type="number" id="con-installments" required class="w-full p-2 border border-slate-200 rounded font-mono">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-slate-500">تاريخ أول دفعة</label>
+                        <input type="date" id="con-first-pay" required class="w-full p-2 border border-slate-200 rounded font-mono">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-slate-500">تاريخ الدفعة القادمة</label>
+                        <input type="date" id="con-next-pay" required class="w-full p-2 border border-slate-200 rounded font-mono">
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                    <div>
+                        <label class="block mb-1 text-slate-500">المبلغ الإجمالي (د.ك)</label>
+                        <input type="number" id="con-total" required class="w-full p-2 border border-slate-200 rounded font-mono">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-slate-500">المبلغ المستحق حالياً</label>
+                        <input type="number" id="con-due" required class="w-full p-2 border border-slate-200 rounded font-mono">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-slate-500">المبلغ المتبقي</label>
+                        <input type="number" id="con-remaining" required class="w-full p-2 border border-slate-200 rounded font-mono">
+                    </div>
+                </div>
+                <div>
+                    <label class="block mb-1 text-slate-500">حالة العقد القانونية</label>
+                    <select id="con-status" class="w-full p-2 border border-slate-200 rounded bg-white">
+                        <option value="نشط">نشط وصالح</option>
+                        <option value="قيد المراجعة">قيد المراجعة</option>
+                        <option value="منتهي">منتهي</option>
+                        <option value="ملغي">ملغي</option>
+                    </select>
+                </div>
+                <div class="flex justify-end space-x-2 space-x-reverse pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeContractModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg">إلغاء</button>
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg">حفظ العقد</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- مودال الطلبات -->
+    <div id="order-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl shadow-lg max-w-lg w-full overflow-hidden">
+            <div class="bg-slate-900 text-white p-4 flex justify-between items-center">
+                <h3 class="font-bold text-xs" id="order-modal-title">تسجيل طلب توصيل جديد</h3>
+                <button onclick="closeOrderModal()" class="text-white hover:text-gray-200"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="order-form" onsubmit="saveOrder(event)" class="p-5 space-y-4 text-[11px] font-bold text-slate-700">
+                <input type="hidden" id="ord-index">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block mb-1 text-slate-500">الجهة المقدمة للطلب</label>
+                        <input type="text" id="ord-entity" required class="w-full p-2 border border-slate-200 rounded">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-slate-500">تفاصيل ومحتوى الطلب</label>
+                        <input type="text" id="ord-desc" required class="w-full p-2 border border-slate-200 rounded">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block mb-1 text-slate-500">موقع الاستلام من</label>
+                        <input type="text" id="ord-from" required class="w-full p-2 border border-slate-200 rounded">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-slate-500">موقع التسليم إلى</label>
+                        <input type="text" id="ord-to" required class="w-full p-2 border border-slate-200 rounded">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block mb-1 text-slate-500">تاريخ ووقت التوصيل</label>
+                        <input type="datetime-local" id="ord-datetime" required class="w-full p-2 border border-slate-200 rounded font-mono">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-slate-500">تكلفة التوصيل (د.ك)</label>
+                        <input type="number" id="ord-amount" required class="w-full p-2 border border-slate-200 rounded font-mono">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block mb-1 text-slate-500">اسم السائق المسؤول</label>
+                        <select id="ord-driver" class="w-full p-2 border border-slate-200 rounded bg-white">
+                            <!-- سيتم التعبئة ديناميكياً -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-slate-500">رقم لوحة السيارة</label>
+                        <select id="ord-plate" class="w-full p-2 border border-slate-200 rounded bg-white">
+                            <!-- سيتم التعبئة ديناميكياً -->
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block mb-1 text-slate-500">حالة الطلب</label>
+                    <select id="ord-status" class="w-full p-2 border border-slate-200 rounded bg-white">
+                        <option value="جاري الاستلام">جاري الاستلام</option>
+                        <option value="في الطريق للعميل">في الطريق للعميل</option>
+                        <option value="تم التسليم والتحصيل">تم التسليم والتحصيل</option>
+                        <option value="مرتجع">مرتجع أو ملغي</option>
+                    </select>
+                </div>
+                <div class="flex justify-end space-x-2 space-x-reverse pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeOrderModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg">إلغاء</button>
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg">حفظ الطلب</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- فوتر التطبيق -->
+    <footer class="bg-slate-900 text-slate-500 py-6 text-center text-xs mt-auto border-t border-slate-800">
+        <p>© 2026 نظام إدارة المؤسسات والأسطول الموحد - بوابة الشركات الآمنة SaaS Portal</p>
+    </footer>
+
+    <!-- ======================== المنطق البرمجي والذكاء الاصطناعي لتشغيل النظام ======================== -->
+    <script>
+        // قواعد البيانات الافتراضية للشركات التجريبية (Falcon & Gulf) لفصل البيانات
+        const defaultCompanyDatabases = {
+            "falcon": {
+                name: "شركة الصقر للخدمات اللوجستية",
+                employees: [
+                    { id: "EMP-101", name: "محمد خالد العتيبي", civil: "292101504932", position: "مدير العمليات", phone: "99123456", resExpiry: "2026-11-20", insExpiry: "2026-10-15", plate: "1/54321", salary: 850, note: "مسؤول المطار" },
+                    { id: "EMP-102", name: "أحمد عبد الله المطيري", civil: "288051203942", position: "سائق توزيع ثقيل", phone: "66432109", resExpiry: "2026-07-15", insExpiry: "2026-09-01", plate: "5/98765", salary: 450, note: "منطقة العارضية" },
+                    { id: "EMP-103", name: "سالم شاهين الشمري", civil: "295091802953", position: "سائق توزيع باص", phone: "55998822", resExpiry: "2026-06-30", insExpiry: "2026-07-20", plate: "3/77889", salary: 420, note: "تأمين طبي فئة أ" }
+                ],
+                vehicles: [
+                    { plate: "1/54321", model: "تويوتا هايلكس 2024", insExpiry: "2027-02-15", healthCard: "2026-12-01", odom: 35400, lastMaint: "2026-05-10", maintNotes: "تبديل زيت وفلاتر", notes: "حالة ممتازة" },
+                    { plate: "5/98765", model: "مرسيدس أكتروس شاحنة", insExpiry: "2026-07-10", healthCard: "2026-08-20", odom: 184500, lastMaint: "2026-04-18", maintNotes: "صيانة المكابح والإطارات", notes: "شاحنة ثقيلة" },
+                    { plate: "3/77889", model: "نيسان أورفان باص 2023", insExpiry: "2026-12-25", healthCard: "2026-06-28", odom: 62000, lastMaint: "2026-05-25", maintNotes: "فريون وصيانة تكييف", notes: "مستلمة بالكامل" }
+                ],
+                contracts: [
+                    { num: "CON-F-01", entity: "مؤسسة الرعاية السكنية", duration: "سنتين", from: "2026-01-01", to: "2027-12-31", installments: 12, firstPay: "2026-01-15", nextPay: "2026-07-15", total: 45000, due: 15000, remaining: 30000, status: "نشط" },
+                    { num: "CON-F-02", entity: "وزارة التربية الكويتية", duration: "سنة واحدة", from: "2026-03-01", to: "2027-02-28", installments: 4, firstPay: "2026-04-01", nextPay: "2026-07-01", total: 18000, due: 9500, remaining: 8500, status: "نشط" }
+                ],
+                orders: [
+                    { id: 1, entity: "بنك الكويت الوطني (NBK)", desc: "توصيل طرود سرية ومطابقة", from: "برج الراية شرق", to: "الفرع الرئيسي", datetime: "2026-06-24T09:30", amount: 25, driver: "محمد خالد العتيبي", plate: "1/54321", status: "تم التسليم والتحصيل" }
+                ]
+            },
+            "gulf": {
+                name: "مؤسسة الخليج للتجارة العامة",
+                employees: [
+                    { id: "EMP-201", name: "khaled jassim", civil: "290120401948", position: "مشرف أسطول النقل", phone: "90011223", resExpiry: "2026-12-10", insExpiry: "2026-11-20", plate: "4/22114", salary: 780, note: "مسؤول فرع الشويخ" },
+                    { id: "EMP-202", name: "جاسم فضلي العنزي", civil: "294082203921", position: "سائق توزيع أول", phone: "60077889", resExpiry: "2026-06-22", insExpiry: "2026-06-28", plate: "بلا عهدة", salary: 400, note: "بحاجة لتحديث رخصة القيادة" }
+                ],
+                vehicles: [
+                    { plate: "4/22114", model: "فورد ترانزيت باص 2022", insExpiry: "2026-11-15", healthCard: "2026-10-10", odom: 98400, lastMaint: "2026-05-02", maintNotes: "تبديل المساعدات الأمامية والزيوت", notes: "حالة جيدة" }
+                ],
+                contracts: [
+                    { num: "CON-G-01", entity: "شركة النفط الكويتية KOC", duration: "سنة", from: "2026-02-15", to: "2027-02-14", installments: 6, firstPay: "2026-03-01", nextPay: "2026-07-01", total: 60000, due: 20000, remaining: 40000, status: "نشط" }
+                ],
+                orders: [
+                    { id: 1, entity: "هيئة تشجيع الاستثمار المباشر", desc: "أوراق تخليص جمركي موثقة", from: "ميناء الشويخ رصيف 2", to: "مبنى الهيئة", datetime: "2026-06-24T11:00", amount: 50, driver: "khaled jassim", plate: "4/22114", status: "في الطريق للعميل" }
+                ]
+            }
+        };
+
+        // إدارة الحالة والشركات المسجلة (تُحفظ في localStorage لتدوم طوال تصفح المستخدم وتمنع ضياع البيانات عند التحديث)
+        let activeCompany = null;
+        let companyData = null;
+        let registeredCompanies = JSON.parse(localStorage.getItem("erp_companies")) || {
+            "falcon": { password: "123456", name: "شركة الصقر للخدمات اللوجستية" },
+            "gulf": { password: "123456", name: "مؤسسة الخليج للتجارة العامة" }
+        };
+
+        // متغيرات الرسوم البيانية لتسهيل التحديث المستمر
+        let financialChartInstance = null;
+        let statusChartInstance = null;
+
+        window.onload = function() {
+            // حفظ قائمة الشركات الأساسية في المتصفح إذا لم تكن موجودة مسبقاً
+            if (!localStorage.getItem("erp_companies")) {
+                localStorage.setItem("erp_companies", JSON.stringify(registeredCompanies));
+            }
+        };
+
+        // دالة عرض التنبيهات المخصصة (Toast Notification) كبديل لـ alert
+        function triggerToast(message, isError = false) {
+            const toastBox = document.getElementById("toast-box");
+            const toastBg = document.getElementById("toast-bg");
+            const toastMsg = document.getElementById("toast-message");
+            const toastIcon = document.getElementById("toast-icon");
+
+            toastMsg.innerText = message;
+            if (isError) {
+                toastBg.className = "bg-rose-600 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center space-x-3 space-x-reverse";
+                toastIcon.innerHTML = `<i class="fas fa-exclamation-circle"></i>`;
+            } else {
+                toastBg.className = "bg-emerald-600 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center space-x-3 space-x-reverse";
+                toastIcon.innerHTML = `<i class="fas fa-check-circle"></i>`;
+            }
+
+            toastBox.classList.remove("translate-x-[-150%]");
+            toastBox.classList.add("translate-x-0");
+
+            setTimeout(() => {
+                toastBox.classList.remove("translate-x-0");
+                toastBox.classList.add("translate-x-[-150%]");
+            }, 3500);
+        }
+
+        // ملء حسابات الديمو بسرعة لتسهيل وتيسير تجربة النظام
+        function fillDemo(type) {
+            document.getElementById("login-username").value = type;
+            document.getElementById("login-password").value = "123456";
+            triggerToast("تم ملء بيانات الدخول التجريبية");
+        }
+
+        // التبديل بين شاشات تسجيل الدخول وإنشاء شركة جديدة
+        function toggleAuthTab(tab) {
+            const loginBtn = document.getElementById("tab-login-btn");
+            const regBtn = document.getElementById("tab-register-btn");
+            const loginForm = document.getElementById("login-form");
+            const regForm = document.getElementById("register-form");
+
+            if (tab === 'login') {
+                loginBtn.className = "flex-1 py-2.5 rounded-md text-center bg-white text-slate-900 shadow-sm transition";
+                regBtn.className = "flex-1 py-2.5 rounded-md text-center text-slate-500 transition";
+                loginForm.classList.remove("hidden");
+                regForm.classList.add("hidden");
+            } else {
+                regBtn.className = "flex-1 py-2.5 rounded-md text-center bg-white text-slate-900 shadow-sm transition";
+                loginBtn.className = "flex-1 py-2.5 rounded-md text-center text-slate-500 transition";
+                regForm.classList.remove("hidden");
+                loginForm.classList.add("hidden");
+            }
+        }
+
+        // معالجة تسجيل الدخول
+        function handleLogin(event) {
+            event.preventDefault();
+            const user = document.getElementById("login-username").value.trim().toLowerCase();
+            const pass = document.getElementById("login-password").value;
+
+            if (registeredCompanies[user] && registeredCompanies[user].password === pass) {
+                // تفعيل حساب الشركة بنجاح
+                activeCompany = {
+                    id: user,
+                    name: registeredCompanies[user].name
+                };
+                
+                // تحميل قاعدة البيانات الخاصة بالشركة من التخزين المحلي، أو تحميل الديفولت الافتراضي إذا كانت المرة الأولى
+                const storedData = localStorage.getItem("company_db_" + user);
+                if (storedData) {
+                    companyData = JSON.parse(storedData);
+                } else {
+                    companyData = defaultCompanyDatabases[user] || {
+                        name: activeCompany.name,
+                        employees: [],
+                        vehicles: [],
+                        contracts: [],
+                        orders: []
+                    };
+                    saveCompanyDataToStorage();
+                }
+
+                launchApplication();
+            } else {
+                triggerToast("اسم المستخدم أو كلمة المرور غير صحيحة!", true);
+            }
+        }
+
+        // معالجة تسجيل شركة جديدة بالكامل
+        function handleRegister(event) {
+            event.preventDefault();
+            const compName = document.getElementById("reg-company-name").value.trim();
+            const user = document.getElementById("reg-username").value.trim().toLowerCase();
+            const pass = document.getElementById("reg-password").value;
+
+            if (registeredCompanies[user]) {
+                triggerToast("اسم مستخدم الشركة مسجل مسبقاً! يرجى اختيار اسم فريد", true);
+                return;
+            }
+
+            // تسجيل الحساب الجديد في قائمة الشركات
+            registeredCompanies[user] = { password: pass, name: compName };
+            localStorage.setItem("erp_companies", JSON.stringify(registeredCompanies));
+
+            // تفعيل وتوليد داتا فارغة للشركة الجديدة لتبدأ صفحة جديدة
+            activeCompany = { id: user, name: compName };
+            companyData = {
+                name: compName,
+                employees: [],
+                vehicles: [],
+                contracts: [],
+                orders: []
+            };
+            saveCompanyDataToStorage();
+
+            triggerToast("تم إنشاء حساب شركتك بنجاح! مرحباً بك");
+            launchApplication();
+        }
+
+        // حفظ بيانات الشركة الحالية في التخزين المنفصل الخاص بها
+        function saveCompanyDataToStorage() {
+            if (activeCompany) {
+                localStorage.setItem("company_db_" + activeCompany.id, JSON.stringify(companyData));
+            }
+        }
+
+        // تشغيل نظام الـ ERP وإظهار لوحة التحكم بعد نجاح الدخول والتحقق
+        function launchApplication() {
+            document.getElementById("auth-section").classList.add("hidden");
+            document.getElementById("app-section").classList.remove("hidden");
+
+            // ملء بيانات الهوية الخاصة بالشركة في السايدبار والشاشة الرئيسية
+            document.getElementById("active-company-name").innerText = activeCompany.name;
+            document.getElementById("active-company-logo").innerText = activeCompany.name.charAt(0);
+            document.getElementById("company-raw-id").innerText = "COMPANY_SECURE_KEY_" + activeCompany.id.toUpperCase();
+
+            // العودة لتبويب لوحة التحكم وتحديث كافة الرسوم والبيانات فوراً
+            switchTab('dashboard');
+            refreshAllData();
+            triggerToast("أهلاً بك في بوابة الإدارة الآمنة لـ " + activeCompany.name);
+        }
+
+        // تسجيل الخروج وإعادة تنظيف الحالة والعودة لواجهة القفل
+        function handleLogout() {
+            activeCompany = null;
+            companyData = null;
+            document.getElementById("app-section").classList.add("hidden");
+            document.getElementById("auth-section").classList.remove("hidden");
+            document.getElementById("login-form").reset();
+            document.getElementById("register-form").reset();
+            triggerToast("تم تسجيل الخروج بنجاح وأرشفة الجلسة الحالية آمنياً");
+        }
+
+        // تبديل الألسنة والشاشات داخل النظام
+        function switchTab(tabId) {
+            document.querySelectorAll('main > section').forEach(sec => sec.classList.add('hidden'));
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+            document.querySelectorAll('#main-navigation button').forEach(btn => {
+                btn.className = "tab-btn w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-lg text-right text-slate-400 hover:bg-slate-800 transition duration-200";
+            });
+            const activeBtn = document.getElementById(`btn-${tabId}`);
+            if (activeBtn) {
+                activeBtn.className = "tab-btn w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-lg text-right bg-emerald-600 text-white font-bold transition duration-200";
+            }
+
+            if (tabId === 'profile') {
+                populateProfileSelector();
+                loadEmployeeProfile();
+            } else if (tabId === 'word-exporter') {
+                populateWordSelectors();
+            }
+        }
+
+        // تحديث وجلب بيانات الشركة الحالية وإجراء الحسابات فوراً
+        function refreshAllData() {
+            renderEmployees();
+            renderVehicles();
+            renderContracts();
+            renderOrders();
+            calculateFinancials();
+            renderDashboardAlerts();
+            updateDashboardKPIs();
+            renderCharts();
+        }
+
+        function updateDashboardKPIs() {
+            document.getElementById("stat-total-employees").innerText = companyData.employees.length;
+            document.getElementById("stat-total-vehicles").innerText = companyData.vehicles.length;
+            
+            const activeConCount = companyData.contracts.filter(c => c.status === 'نشط').length;
+            document.getElementById("stat-active-contracts").innerText = activeConCount;
+
+            const totals = getFinancialTotals();
+            document.getElementById("stat-net-profit").innerText = totals.net + " د.ك";
+        }
+
+        // احتساب ميزانية وأرباح الشركة الحالية بشكل منفصل
+        function getFinancialTotals() {
+            const totalSalaries = companyData.employees.reduce((acc, emp) => acc + parseFloat(emp.salary), 0);
+            const totalContractsRev = companyData.contracts.reduce((acc, con) => acc + parseFloat(con.due), 0);
+            const totalOrdersRev = companyData.orders.reduce((acc, ord) => acc + parseFloat(ord.amount), 0);
+            const totalRev = totalContractsRev + totalOrdersRev;
+            const operationalExpense = companyData.vehicles.length * 75; // 75 د.ك تكلفة صيانة تقديرية لكل سيارة شهرياً
+            const net = totalRev - (totalSalaries + operationalExpense);
+
+            return {
+                salaries: totalSalaries,
+                contractRev: totalContractsRev,
+                orderRev: totalOrdersRev,
+                totalRev: totalRev,
+                expenses: operationalExpense,
+                net: net
+            };
+        }
+
+        function calculateFinancials() {
+            const totals = getFinancialTotals();
+            
+            document.getElementById("fin-total-revenue").innerText = totals.totalRev + " د.ك";
+            document.getElementById("fin-total-salaries").innerText = totals.salaries + " د.ك";
+            document.getElementById("fin-total-expenses").innerText = totals.expenses + " د.ك";
+            document.getElementById("fin-net-profit").innerText = totals.net + " د.ك";
+
+            document.getElementById("fin-detail-contract-revenue").innerText = totals.contractRev + " د.ك";
+            document.getElementById("fin-detail-order-revenue").innerText = totals.orderRev + " د.ك";
+            document.getElementById("fin-detail-salaries-expense").innerText = totals.salaries + " د.ك";
+            document.getElementById("fin-detail-maintenance-expense").innerText = totals.expenses + " د.ك";
+            document.getElementById("fin-detail-net-profit").innerText = totals.net + " د.ك";
+        }
+
+        // نظام تنبيهات التواريخ للشركة النشطة (الإقامات، انتهاء التأمين وصلاحيات السائقين)
+        function renderDashboardAlerts() {
+            const container = document.getElementById("dashboard-alerts-container");
+            container.innerHTML = "";
+
+            let expiringResCount = 0;
+            let expiringInsCount = 0;
+            const today = new Date();
+
+            companyData.employees.forEach(emp => {
+                const expiry = new Date(emp.resExpiry);
+                const diffDays = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+
+                if (diffDays <= 30) {
+                    expiringResCount++;
+                    const alertDiv = document.createElement("div");
+                    alertDiv.className = `p-3 rounded-lg flex items-center justify-between text-xs ${diffDays < 0 ? 'bg-rose-50 border border-rose-200 text-rose-800' : 'bg-amber-50 border border-amber-200 text-amber-800'}`;
+                    alertDiv.innerHTML = `
+                        <div>
+                            <p class="font-bold"><i class="fas fa-id-card ml-1"></i> إقامة الموظف: ${emp.name}</p>
+                            <p class="mt-0.5 text-[10px] opacity-80">الانتهاء: ${emp.resExpiry} (${diffDays < 0 ? 'منتهية الصلاحية!' : 'متبقي ' + diffDays + ' يوم'})</p>
+                        </div>
+                        <button onclick="switchTab('employees')" class="px-2.5 py-1 bg-white hover:bg-slate-150 rounded font-bold shadow-xs">تجديد الإقامة</button>
+                    `;
+                    container.appendChild(alertDiv);
+                }
+            });
+
+            companyData.vehicles.forEach(veh => {
+                const insExpiry = new Date(veh.insExpiry);
+                const diffIns = Math.ceil((insExpiry - today) / (1000 * 60 * 60 * 24));
+
+                if (diffIns <= 30) {
+                    expiringInsCount++;
+                    const alertDiv = document.createElement("div");
+                    alertDiv.className = "p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 flex items-center justify-between text-xs";
+                    alertDiv.innerHTML = `
+                        <div>
+                            <p class="font-bold"><i class="fas fa-shield-alt ml-1"></i> تأمين السيارة: ${veh.plate}</p>
+                            <p class="mt-0.5 text-[10px] opacity-80">تاريخ الانتهاء: ${veh.insExpiry}</p>
+                        </div>
+                        <button onclick="switchTab('vehicles')" class="px-2.5 py-1 bg-white hover:bg-slate-150 rounded font-bold shadow-xs">تحديث التأمين</button>
+                    `;
+                    container.appendChild(alertDiv);
+                }
+            });
+
+            document.getElementById("badge-expiring-residencies").innerText = expiringResCount + " إقامات";
+            document.getElementById("badge-expiring-insurances").innerText = expiringInsCount + " تأمينات";
+
+            if (container.children.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-slate-400">
+                        <i class="fas fa-shield-halved fa-2x mb-2 text-emerald-200"></i>
+                        <p class="text-[10px]">كافة وثائق شركتك سارية الصلاحية بالكامل</p>
+                    </div>
+                `;
+            }
+        }
+
+        // معالجة ورسم المخططات البيانية التفاعلية باستخدام Chart.js
+        function renderCharts() {
+            const totals = getFinancialTotals();
+
+            if (financialChartInstance) {
+                financialChartInstance.destroy();
+            }
+            const ctx1 = document.getElementById('financialChart').getContext('2d');
+            financialChartInstance = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: ['الرواتب الكلية', 'عوائد العقود', 'عوائد الطلبات', 'التشغيل والصيانة', 'صافي الربح'],
+                    datasets: [{
+                        label: 'الميزانية بالدينار الكويتي (د.ك)',
+                        data: [totals.salaries, totals.contractRev, totals.orderRev, totals.expenses, totals.net],
+                        backgroundColor: [
+                            'rgba(239, 68, 68, 0.85)',
+                            'rgba(16, 185, 129, 0.85)',
+                            'rgba(59, 130, 246, 0.85)',
+                            'rgba(245, 158, 11, 0.85)',
+                            'rgba(9, 114, 88, 0.95)'
+                        ],
+                        borderWidth: 1,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+
+            if (statusChartInstance) {
+                statusChartInstance.destroy();
+            }
+            const ctx2 = document.getElementById('statusChart').getContext('2d');
+            const completedOrders = companyData.orders.filter(o => o.status === 'تم التسليم والتحصيل').length;
+            const activeCons = companyData.contracts.filter(c => c.status === 'نشط').length;
+
+            statusChartInstance = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['رحلات منجزة', 'عقود نشطة'],
+                    datasets: [{
+                        data: [completedOrders, activeCons],
+                        backgroundColor: ['#10b981', '#8b5cf6']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 10, font: { family: 'Cairo', size: 10 } } }
+                    }
+                }
+            });
+        }
+
+
+        /* ======================== منطق شيت الموظفين ======================== */
+        function renderEmployees() {
+            const body = document.getElementById("employees-table-body");
+            body.innerHTML = "";
+
+            companyData.employees.forEach((emp, index) => {
+                const tr = document.createElement("tr");
+                tr.className = "border-b border-slate-150 hover:bg-slate-50 transition";
+                tr.innerHTML = `
+                    <td class="p-3 font-bold text-slate-700">${emp.id}</td>
+                    <td class="p-3 font-semibold">${emp.name}</td>
+                    <td class="p-3 font-mono">${emp.civil}</td>
+                    <td class="p-3 text-emerald-850 font-bold">${emp.position}</td>
+                    <td class="p-3 font-mono">${emp.phone}</td>
+                    <td class="p-3 font-mono">${emp.resExpiry}</td>
+                    <td class="p-3 font-mono">${emp.insExpiry}</td>
+                    <td class="p-3"><span class="bg-slate-100 text-slate-700 px-2.5 py-1 rounded font-mono font-bold">${emp.plate}</span></td>
+                    <td class="p-3 font-bold">${emp.salary} د.ك</td>
+                    <td class="p-3 text-center">
+                        <div class="flex justify-center space-x-1 space-x-reverse">
+                            <button onclick="editEmployee(${index})" class="text-blue-600 hover:text-blue-800 p-1"><i class="fas fa-edit"></i></button>
+                            <button onclick="deleteEmployee(${index})" class="text-rose-600 hover:text-rose-800 p-1"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </td>
+                `;
+                body.appendChild(tr);
+            });
+        }
+
+        function filterEmployees() {
+            const query = document.getElementById("search-employees").value.toLowerCase();
+            const rows = document.querySelectorAll("#employees-table-body tr");
+            rows.forEach((row, i) => {
+                const name = companyData.employees[i].name.toLowerCase();
+                const civil = companyData.employees[i].civil;
+                if (name.includes(query) || civil.includes(query)) {
+                    row.classList.remove("hidden");
+                } else {
+                    row.classList.add("hidden");
+                }
+            });
+        }
+
+        function openEmployeeModal(index = null) {
+            const modal = document.getElementById("employee-modal");
+            const title = document.getElementById("employee-modal-title");
+            const form = document.getElementById("employee-form");
+            
+            const carPlateSelect = document.getElementById("emp-car-plate");
+            carPlateSelect.innerHTML = `<option value="بلا عهدة">لا توجد عهدة سيارة</option>`;
+            companyData.vehicles.forEach(v => {
+                carPlateSelect.innerHTML += `<option value="${v.plate}">${v.plate} - ${v.model}</option>`;
+            });
+
+            if (index !== null) {
+                title.innerText = "تعديل بيانات الموظف بشركتنا";
+                const emp = companyData.employees[index];
+                document.getElementById("emp-index").value = index;
+                document.getElementById("emp-name").value = emp.name;
+                document.getElementById("emp-civil").value = emp.civil;
+                document.getElementById("emp-position").value = emp.position;
+                document.getElementById("emp-phone").value = emp.phone;
+                document.getElementById("emp-res-expiry").value = emp.resExpiry;
+                document.getElementById("emp-ins-expiry").value = emp.insExpiry;
+                document.getElementById("emp-car-plate").value = emp.plate;
+                document.getElementById("emp-salary").value = emp.salary;
+                document.getElementById("emp-note").value = emp.note || "";
+            } else {
+                title.innerText = "إضافة موظف جديد لشركتنا";
+                form.reset();
+                document.getElementById("emp-index").value = "";
+            }
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+        }
+
+        function closeEmployeeModal() {
+            document.getElementById("employee-modal").classList.add("hidden");
+        }
+
+        function saveEmployee(event) {
+            event.preventDefault();
+            const index = document.getElementById("emp-index").value;
+            const name = document.getElementById("emp-name").value;
+            const civil = document.getElementById("emp-civil").value;
+            const position = document.getElementById("emp-position").value;
+            const phone = document.getElementById("emp-phone").value;
+            const resExpiry = document.getElementById("emp-res-expiry").value;
+            const insExpiry = document.getElementById("emp-ins-expiry").value;
+            const plate = document.getElementById("emp-car-plate").value;
+            const salary = document.getElementById("emp-salary").value;
+            const note = document.getElementById("emp-note").value;
+
+            if (index !== "") {
+                companyData.employees[index] = { ...companyData.employees[index], name, civil, position, phone, resExpiry, insExpiry, plate, salary, note };
+                triggerToast("تم تعديل بيانات الموظف بنجاح");
+            } else {
+                const newId = `EMP-${Math.floor(Math.random() * 900) + 100}`;
+                companyData.employees.push({ id: newId, name, civil, position, phone, resExpiry, insExpiry, plate, salary, note });
+                triggerToast("تمت إضافة الموظف الجديد لقائمتنا");
+            }
+            saveCompanyDataToStorage();
+            closeEmployeeModal();
+            refreshAllData();
+        }
+
+        function editEmployee(index) {
+            openEmployeeModal(index);
+        }
+
+        function deleteEmployee(index) {
+            if (confirm("هل تريد حذف هذا الموظف من سجلات الشركة نهائياً؟")) {
+                companyData.employees.splice(index, 1);
+                saveCompanyDataToStorage();
+                triggerToast("تم حذف الموظف بنجاح", true);
+                refreshAllData();
+            }
+        }
+
+
+        /* ======================== منطق شيت السيارات والأسطول ======================== */
+        function renderVehicles() {
+            const body = document.getElementById("vehicles-table-body");
+            body.innerHTML = "";
+
+            companyData.vehicles.forEach((veh, index) => {
+                const tr = document.createElement("tr");
+                tr.className = "border-b border-slate-150 hover:bg-slate-50 transition";
+                tr.innerHTML = `
+                    <td class="p-3 font-bold text-slate-500">${index + 1}</td>
+                    <td class="p-3 font-mono font-bold text-emerald-700">${veh.plate}</td>
+                    <td class="p-3 font-semibold">${veh.model}</td>
+                    <td class="p-3 font-mono">${veh.insExpiry}</td>
+                    <td class="p-3 font-mono">${veh.healthCard}</td>
+                    <td class="p-3 font-mono font-bold">${veh.odom.toLocaleString()}</td>
+                    <td class="p-3 font-mono">${veh.lastMaint}</td>
+                    <td class="p-3 text-slate-600">${veh.maintNotes || '-'}</td>
+                    <td class="p-3 text-slate-500">${veh.notes || '-'}</td>
+                    <td class="p-3 text-center">
+                        <div class="flex justify-center space-x-1 space-x-reverse">
+                            <button onclick="editVehicle(${index})" class="text-blue-600 hover:text-blue-800 p-1"><i class="fas fa-edit"></i></button>
+                            <button onclick="deleteVehicle(${index})" class="text-rose-600 hover:text-rose-800 p-1"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </td>
+                `;
+                body.appendChild(tr);
+            });
+        }
+
+        function filterVehicles() {
+            const query = document.getElementById("search-vehicles").value.toLowerCase();
+            const rows = document.querySelectorAll("#vehicles-table-body tr");
+            rows.forEach((row, i) => {
+                const plate = companyData.vehicles[i].plate.toLowerCase();
+                const model = companyData.vehicles[i].model.toLowerCase();
+                if (plate.includes(query) || model.includes(query)) {
+                    row.classList.remove("hidden");
+                } else {
+                    row.classList.add("hidden");
+                }
+            });
+        }
+
+        function openVehicleModal(index = null) {
+            const modal = document.getElementById("vehicle-modal");
+            const title = document.getElementById("vehicle-modal-title");
+            const form = document.getElementById("vehicle-form");
+
+            if (index !== null) {
+                title.innerText = "تعديل بيانات المركبة والكرت الصحي";
+                const veh = companyData.vehicles[index];
+                document.getElementById("veh-index").value = index;
+                document.getElementById("veh-plate").value = veh.plate;
+                document.getElementById("veh-model").value = veh.model;
+                document.getElementById("veh-ins-expiry").value = veh.insExpiry;
+                document.getElementById("veh-health-card").value = veh.healthCard;
+                document.getElementById("veh-odom").value = veh.odom;
+                document.getElementById("veh-last-maint").value = veh.lastMaint;
+                document.getElementById("veh-maint-notes").value = veh.maintNotes || "";
+                document.getElementById("veh-notes").value = veh.notes || "";
+            } else {
+                title.innerText = "إضافة سيارة جديدة للشركة";
+                form.reset();
+                document.getElementById("veh-index").value = "";
+            }
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+        }
+
+        function closeVehicleModal() {
+            document.getElementById("vehicle-modal").classList.add("hidden");
+        }
+
+        function saveVehicle(event) {
+            event.preventDefault();
+            const index = document.getElementById("veh-index").value;
+            const plate = document.getElementById("veh-plate").value;
+            const model = document.getElementById("veh-model").value;
+            const insExpiry = document.getElementById("veh-ins-expiry").value;
+            const healthCard = document.getElementById("veh-health-card").value;
+            const odom = parseInt(document.getElementById("veh-odom").value);
+            const lastMaint = document.getElementById("veh-last-maint").value;
+            const maintNotes = document.getElementById("veh-maint-notes").value;
+            const notes = document.getElementById("veh-notes").value;
+
+            if (index !== "") {
+                companyData.vehicles[index] = { plate, model, insExpiry, healthCard, odom, lastMaint, maintNotes, notes };
+                triggerToast("تم تعديل السيارة بالأسطول بنجاح");
+            } else {
+                companyData.vehicles.push({ plate, model, insExpiry, healthCard, odom, lastMaint, maintNotes, notes });
+                triggerToast("تم تسجيل السيارة الجديدة بمستندات الشركة");
+            }
+            saveCompanyDataToStorage();
+            closeVehicleModal();
+            refreshAllData();
+        }
+
+        function editVehicle(index) {
+            openVehicleModal(index);
+        }
+
+        function deleteVehicle(index) {
+            if (confirm("هل تريد حذف هذه المركبة من سجلات شركتك نهائياً؟")) {
+                companyData.vehicles.splice(index, 1);
+                saveCompanyDataToStorage();
+                triggerToast("تم مسح بيانات السيارة من الأسطول", true);
+                refreshAllData();
+            }
+        }
+
+
+        /* ======================== منطق شيت العقود والاتفاقيات ======================== */
+        function renderContracts() {
+            const body = document.getElementById("contracts-table-body");
+            body.innerHTML = "";
+
+            companyData.contracts.forEach((con, index) => {
+                const tr = document.createElement("tr");
+                tr.className = "border-b border-slate-150 hover:bg-slate-50 transition";
+                
+                let badgeColor = "bg-green-50 text-green-700 border-green-200";
+                if (con.status === "قيد المراجعة") badgeColor = "bg-amber-50 text-amber-700 border-amber-200";
+                else if (con.status === "منتهي") badgeColor = "bg-gray-100 text-gray-700 border-gray-300";
+
+                tr.innerHTML = `
+                    <td class="p-3 font-bold text-slate-700">${con.num}</td>
+                    <td class="p-3 font-bold text-slate-800">${con.entity}</td>
+                    <td class="p-3">${con.duration}</td>
+                    <td class="p-3 font-mono">${con.from}</td>
+                    <td class="p-3 font-mono">${con.to}</td>
+                    <td class="p-3 text-center font-bold">${con.installments}</td>
+                    <td class="p-3 font-mono">${con.firstPay}</td>
+                    <td class="p-3 font-mono text-amber-600 font-bold">${con.nextPay}</td>
+                    <td class="p-3 font-bold">${con.total.toLocaleString()} د.ك</td>
+                    <td class="p-3 font-bold text-emerald-600">${con.due.toLocaleString()} د.ك</td>
+                    <td class="p-3 font-bold text-rose-500">${con.remaining.toLocaleString()} د.ك</td>
+                    <td class="p-3 text-center">
+                        <span class="px-2.5 py-0.5 rounded-full border text-[10px] font-bold ${badgeColor}">${con.status}</span>
+                    </td>
+                    <td class="p-3 text-center">
+                        <div class="flex justify-center space-x-1 space-x-reverse">
+                            <button onclick="editContract(${index})" class="text-blue-600 p-1"><i class="fas fa-edit"></i></button>
+                            <button onclick="deleteContract(${index})" class="text-rose-600 p-1"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </td>
+                `;
+                body.appendChild(tr);
+            });
+        }
+
+        function filterContracts() {
+            const query = document.getElementById("search-contracts").value.toLowerCase();
+            const rows = document.querySelectorAll("#contracts-table-body tr");
+            rows.forEach((row, i) => {
+                const entity = companyData.contracts[i].entity.toLowerCase();
+                const num = companyData.contracts[i].num.toLowerCase();
+                if (entity.includes(query) || num.includes(query)) {
+                    row.classList.remove("hidden");
+                } else {
+                    row.classList.add("hidden");
+                }
+            });
+        }
+
+        function openContractModal(index = null) {
+            const modal = document.getElementById("contract-modal");
+            const title = document.getElementById("contract-modal-title");
+            const form = document.getElementById("contract-form");
+
+            if (index !== null) {
+                title.innerText = "تعديل تفاصيل العقد والالتزامات المالية";
+                const con = companyData.contracts[index];
+                document.getElementById("con-index").value = index;
+                document.getElementById("con-num").value = con.num;
+                document.getElementById("con-entity").value = con.entity;
+                document.getElementById("con-duration").value = con.duration;
+                document.getElementById("con-from").value = con.from;
+                document.getElementById("con-to").value = con.to;
+                document.getElementById("con-installments").value = con.installments;
+                document.getElementById("con-first-pay").value = con.firstPay;
+                document.getElementById("con-next-pay").value = con.nextPay;
+                document.getElementById("con-total").value = con.total;
+                document.getElementById("con-due").value = con.due;
+                document.getElementById("con-remaining").value = con.remaining;
+                document.getElementById("con-status").value = con.status;
+            } else {
+                title.innerText = "تسجيل وتدشين عقد شركة جديد";
+                form.reset();
+                document.getElementById("con-index").value = "";
+            }
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+        }
+
+        // إغلاق مودال صياغة العقد
+        function closeContractModal() {
+            document.getElementById("contract-modal").classList.add("hidden");
+        }
+
+        function saveContract(event) {
+            event.preventDefault();
+            const index = document.getElementById("con-index").value;
+            const num = document.getElementById("con-num").value;
+            const entity = document.getElementById("con-entity").value;
+            const duration = document.getElementById("con-duration").value;
+            const from = document.getElementById("con-from").value;
+            const to = document.getElementById("con-to").value;
+            const installments = parseInt(document.getElementById("con-installments").value);
+            const firstPay = document.getElementById("con-first-pay").value;
+            const nextPay = document.getElementById("con-next-pay").value;
+            const total = parseFloat(document.getElementById("con-total").value);
+            const due = parseFloat(document.getElementById("con-due").value);
+            const remaining = parseFloat(document.getElementById("con-remaining").value);
+            const status = document.getElementById("con-status").value;
+
+            if (index !== "") {
+                companyData.contracts[index] = { num, entity, duration, from, to, installments, firstPay, nextPay, total, due, remaining, status };
+                triggerToast("تم تعديل العقد والالتزامات المالية بنجاح");
+            } else {
+                companyData.contracts.push({ num, entity, duration, from, to, installments, firstPay, nextPay, total, due, remaining, status });
+                triggerToast("تمت إضافة العقد الجديد لقائمتكم وأرشفته");
+            }
+            saveCompanyDataToStorage();
+            closeContractModal();
+            refreshAllData();
+        }
+
+        function editContract(index) {
+            openContractModal(index);
+        }
+
+        function deleteContract(index) {
+            if (confirm("هل تريد حذف هذا العقد من سجلات الشركة بالكامل؟")) {
+                companyData.contracts.splice(index, 1);
+                saveCompanyDataToStorage();
+                triggerToast("تم مسح العقد المالي", true);
+                refreshAllData();
+            }
+        }
+
+
+        /* ======================== منطق شيت الطلبات وحركة النقل التوصيل ======================== */
+        function renderOrders() {
+            const body = document.getElementById("orders-table-body");
+            body.innerHTML = "";
+
+            companyData.orders.forEach((ord, index) => {
+                const tr = document.createElement("tr");
+                tr.className = "border-b border-slate-150 hover:bg-slate-50 transition";
+                
+                let statusBadge = "bg-blue-50 text-blue-700";
+                if (ord.status === "تم التسليم والتحصيل") statusBadge = "bg-green-50 text-green-700";
+                else if (ord.status === "جاري الاستلام") statusBadge = "bg-amber-50 text-amber-700";
+
+                tr.innerHTML = `
+                    <td class="p-3 font-bold text-slate-500">${ord.id}</td>
+                    <td class="p-3 font-semibold text-slate-850">${ord.entity}</td>
+                    <td class="p-3 font-semibold">${ord.desc}</td>
+                    <td class="p-3">${ord.from}</td>
+                    <td class="p-3">${ord.to}</td>
+                    <td class="p-3 font-mono">${ord.datetime.replace('T', ' ')}</td>
+                    <td class="p-3 font-bold">${ord.amount} د.ك</td>
+                    <td class="p-3 font-semibold">${ord.driver}</td>
+                    <td class="p-3"><span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-mono font-bold">${ord.plate}</span></td>
+                    <td class="p-3 text-center"><span class="px-2.5 py-1 rounded font-black text-[10px] ${statusBadge}">${ord.status}</span></td>
+                    <td class="p-3 text-center">
+                        <div class="flex justify-center space-x-1 space-x-reverse">
+                            <button onclick="editOrder(${index})" class="text-blue-600 p-1"><i class="fas fa-edit"></i></button>
+                            <button onclick="deleteOrder(${index})" class="text-rose-600 p-1"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </td>
+                `;
+                body.appendChild(tr);
+            });
+        }
+
+        function filterOrders() {
+            const query = document.getElementById("search-orders").value.toLowerCase();
+            const rows = document.querySelectorAll("#orders-table-body tr");
+            rows.forEach((row, i) => {
+                const driver = companyData.orders[i].driver.toLowerCase();
+                const ent = companyData.orders[i].entity.toLowerCase();
+                if (driver.includes(query) || ent.includes(query)) {
+                    row.classList.remove("hidden");
+                } else {
+                    row.classList.add("hidden");
+                }
+            });
+        }
+
+        function openOrderModal(index = null) {
+            const modal = document.getElementById("order-modal");
+            const title = document.getElementById("order-modal-title");
+            const form = document.getElementById("order-form");
+
+            const driverSelect = document.getElementById("ord-driver");
+            const plateSelect = document.getElementById("ord-plate");
+            
+            driverSelect.innerHTML = "";
+            companyData.employees.forEach(emp => {
+                driverSelect.innerHTML += `<option value="${emp.name}">${emp.name} (${emp.position})</option>`;
+            });
+
+            plateSelect.innerHTML = `<option value="بلا عهدة">بدون سيارة</option>`;
+            companyData.vehicles.forEach(veh => {
+                plateSelect.innerHTML += `<option value="${veh.plate}">${veh.plate} - ${veh.model}</option>`;
+            });
+
+            if (index !== null) {
+                title.innerText = "تعديل حالة الرحلة والتوصيل المالي";
+                const ord = companyData.orders[index];
+                document.getElementById("ord-index").value = index;
+                document.getElementById("ord-entity").value = ord.entity;
+                document.getElementById("ord-desc").value = ord.desc;
+                document.getElementById("ord-from").value = ord.from;
+                document.getElementById("ord-to").value = ord.to;
+                document.getElementById("ord-datetime").value = ord.datetime;
+                document.getElementById("ord-amount").value = ord.amount;
+                driverSelect.value = ord.driver;
+                plateSelect.value = ord.plate;
+                document.getElementById("ord-status").value = ord.status;
+            } else {
+                title.innerText = "تسجيل طلب ترحيل وتوصيل جديد";
+                form.reset();
+                document.getElementById("ord-index").value = "";
+            }
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+        }
+
+        function closeOrderModal() {
+            document.getElementById("order-modal").classList.add("hidden");
+        }
+
+        function saveOrder(event) {
+            event.preventDefault();
+            const index = document.getElementById("ord-index").value;
+            const entity = document.getElementById("ord-entity").value;
+            const desc = document.getElementById("ord-desc").value;
+            const from = document.getElementById("ord-from").value;
+            const to = document.getElementById("ord-to").value;
+            const datetime = document.getElementById("ord-datetime").value;
+            const amount = parseFloat(document.getElementById("ord-amount").value);
+            const driver = document.getElementById("ord-driver").value;
+            const plate = document.getElementById("ord-plate").value;
+            const status = document.getElementById("ord-status").value;
+
+            if (index !== "") {
+                companyData.orders[index] = { ...companyData.orders[index], entity, desc, from, to, datetime, amount, driver, plate, status };
+                triggerToast("تم تحديث حالة تسليم الشحنة وتوزيعها");
+            } else {
+                const nextId = companyData.orders.length > 0 ? companyData.orders[companyData.orders.length - 1].id + 1 : 1;
+                companyData.orders.push({ id: nextId, entity, desc, from, to, datetime, amount, driver, plate, status });
+                triggerToast("تم تسجيل طلب التوصيل بنجاح وجاري إبلاغ المندوب");
+            }
+            saveCompanyDataToStorage();
+            closeOrderModal();
+            refreshAllData();
+        }
+
+        function editOrder(index) {
+            openOrderModal(index);
+        }
+
+        function deleteOrder(index) {
+            if (confirm("هل تريد حذف هذا الطلب من السجلات؟")) {
+                companyData.orders.splice(index, 1);
+                saveCompanyDataToStorage();
+                triggerToast("تم إلغاء الطلب بنجاح", true);
+                refreshAllData();
+            }
+        }
+
+
+        /* ======================== ملف الموظف الفردي الشامل ======================== */
+        function populateProfileSelector() {
+            const selector = document.getElementById("profile-employee-selector");
+            selector.innerHTML = "";
+            companyData.employees.forEach(emp => {
+                selector.innerHTML += `<option value="${emp.id}">${emp.name} [ID: ${emp.id}]</option>`;
+            });
+        }
+
+        function loadEmployeeProfile() {
+            const selectedId = document.getElementById("profile-employee-selector").value;
+            const emp = companyData.employees.find(e => e.id === selectedId);
+            if (!emp) return;
+
+            document.getElementById("prof-initials").innerText = emp.name.charAt(0);
+            document.getElementById("prof-name").innerText = emp.name;
+            document.getElementById("prof-position").innerText = emp.position;
+            document.getElementById("prof-id").innerText = emp.id;
+            document.getElementById("prof-salary").innerText = emp.salary + " د.ك";
+            document.getElementById("prof-civil").innerText = emp.civil;
+            document.getElementById("prof-phone").innerText = emp.phone;
+
+            const count = companyData.orders.filter(o => o.driver === emp.name).length;
+            document.getElementById("prof-orders-count").innerText = count + " طلب تسليم مكلّف";
+
+            const veh = companyData.vehicles.find(v => v.plate === emp.plate);
+            if (veh) {
+                document.getElementById("prof-car-plate").innerText = veh.plate;
+                document.getElementById("prof-car-model").innerText = veh.model;
+                document.getElementById("prof-car-odom").innerText = veh.odom.toLocaleString() + " كم";
+            } else {
+                document.getElementById("prof-car-plate").innerText = "لا يوجد";
+                document.getElementById("prof-car-model").innerText = "-";
+                document.getElementById("prof-car-odom").innerText = "-";
+            }
+
+            const resExpirySpan = document.getElementById("prof-res-expiry");
+            resExpirySpan.innerText = emp.resExpiry;
+            const today = new Date();
+            const daysLeft = Math.ceil((new Date(emp.resExpiry) - today) / (1000 * 60 * 60 * 24));
+            
+            const resStatusSpan = document.getElementById("prof-res-status");
+            if (daysLeft < 0) {
+                resExpirySpan.className = "font-bold bg-rose-100 text-rose-800 px-1.5 py-0.5 rounded";
+                resStatusSpan.innerText = "منتهية الصلاحية!";
+                resStatusSpan.className = "font-bold text-rose-700";
+            } else if (daysLeft <= 30) {
+                resExpirySpan.className = "font-bold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded";
+                resStatusSpan.innerText = "أقل من شهر للتجديد";
+                resStatusSpan.className = "font-bold text-amber-600";
+            } else {
+                resExpirySpan.className = "font-bold bg-green-100 text-green-800 px-1.5 py-0.5 rounded";
+                resStatusSpan.innerText = "سارية قانونية";
+                resStatusSpan.className = "font-bold text-green-600";
+            }
+
+            document.getElementById("prof-ins-expiry").innerText = emp.insExpiry;
+        }
+
+
+        /* ======================== محرك توليد وتصدير ملفات Word بصيغة ملائمة ======================== */
+        function populateWordSelectors() {
+            const contractSel = document.getElementById("word-contract-selector");
+            const empCarSel = document.getElementById("word-employee-car-selector");
+
+            contractSel.innerHTML = "";
+            companyData.contracts.forEach(con => {
+                contractSel.innerHTML += `<option value="${con.num}">${con.num} - لجهة: ${con.entity}</option>`;
+            });
+
+            empCarSel.innerHTML = "";
+            companyData.employees.forEach(emp => {
+                empCarSel.innerHTML += `<option value="${emp.id}">${emp.name} [لوحة: ${emp.plate}]</option>`;
+            });
+        }
+
+        // محرك تحويل HTML إلى مستند Word (.doc) قابل للتنزيل والفتح
+        function exportToWord(title, htmlContent) {
+            const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' "+
+                           "xmlns:w='urn:schemas-microsoft-com:office:word' "+
+                           "xmlns='http://www.w3.org/TR/REC-html40'>"+
+                           "<head><title>" + title + "</title>"+
+                           "<style>body { font-family: 'Arial', sans-serif; direction: rtl; text-align: right; line-height: 1.6; } h1 { color: #047857; text-align: center; border-bottom: 2px solid #047857; padding-bottom: 10px; } table { border-collapse: collapse; width: 100%; margin: 20px 0; } th, td { border: 1px solid #ddd; padding: 10px; text-align: right; } th { background-color: #0f172a; color: white; }</style>"+
+                           "</head><body>";
+            const footer = "</body></html>";
+            const sourceHTML = header + htmlContent + footer;
+            
+            const blob = new Blob(['\ufeff' + sourceHTML], { type: 'application/msword;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            
+            const fileDownload = document.createElement("a");
+            document.body.appendChild(fileDownload);
+            fileDownload.href = url;
+            fileDownload.download = title + '.doc';
+            fileDownload.click();
+            document.body.removeChild(fileDownload);
+            triggerToast("تم إنشاء وتصدير مستند Word مخصص بنجاح");
+        }
+
+        function exportContractToWord() {
+            const num = document.getElementById("word-contract-selector").value;
+            const con = companyData.contracts.find(c => c.num === num);
+            if (!con) return;
+
+            const html = `
+                <h1>عقـــد اتفـاق وتقـديم خدمــات رسـمي</h1>
+                <p style="text-align: center; font-weight: bold; color: gray;">صادر عن: ${activeCompany.name}</p>
+                <p><strong>رقم العقد الإشاري للشركة:</strong> ${con.num}</p>
+                <p>تم الاتفاق والتعاقد في دولة الكويت بين كل من:</p>
+                <p><strong>الطرف الأول:</strong> ${activeCompany.name}</p>
+                <p><strong>الطرف الثاني:</strong> ${con.entity}</p>
+                
+                <h3>بنود العقد الرسمية والمبالغ:</h3>
+                <ul>
+                    <li><strong>مدة التعاقد:</strong> ${con.duration} (تبدأ من تاريخ ${con.from} وحتى ${con.to})</li>
+                    <li><strong>القيمة الإجمالية للعقد:</strong> ${con.total.toLocaleString()} دينار كويتي.</li>
+                    <li><strong>قيمة الدفعة المستحقة للتحصيل الفوري:</strong> ${con.due.toLocaleString()} د.ك.</li>
+                    <li><strong>المبلغ المتبقي للطرف الأول في ذمة الطرف الثاني:</strong> ${con.remaining.toLocaleString()} د.ك.</li>
+                    <li><strong>تاريخ الاستحقاق للدفعة القادمة:</strong> ${con.nextPay}</li>
+                    <li><strong>حالة العقد المسجلة بالنظام السحابي للشركة:</strong> ${con.status}</li>
+                </ul>
+                <br/><br/>
+                <p style="text-align: center;"><strong>توقيع ممثل الطرف الأول (الشركة) __________________ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; توقيع ممثل الطرف الثاني __________________</strong></p>
+            `;
+            exportToWord(`عقد_رسمي_${con.entity.replace(/ /g, '_')}`, html);
+        }
+
+        function exportVehicleHandoverToWord() {
+            const empId = document.getElementById("word-employee-car-selector").value;
+            const emp = companyData.employees.find(e => e.id === empId);
+            if (!emp) return;
+
+            const veh = companyData.vehicles.find(v => v.plate === emp.plate) || { model: "غير محدد", odom: 0, insExpiry: "-", lastMaint: "-" };
+
+            const html = `
+                <h1>إقـرار ومحـضر تسلـم عهـدة سيـارة شـركة</h1>
+                <p style="text-align: center; font-weight: bold; color: gray;">المجموعة اللوجستية لشركة: ${activeCompany.name}</p>
+                <p>أنا الموقع أدناه، أقر وأعترف بأنني تسلمت المركبة المبينة مواصفاتها في هذا المحضر من شركة النقل واللوجستيات، وأتعهد بالحفاظ عليها وإجراء الصيانة في أوقاتها.</p>
+                
+                <h3>بيانات الموظف (المستلم):</h3>
+                <table>
+                    <tr><th>اسم الموظف المعتمد</th><td>${emp.name}</td></tr>
+                    <tr><th>الرقم المدني الكويتي</th><td>${emp.civil}</td></tr>
+                    <tr><th>رقم الهوية ID</th><td>${emp.id}</td></tr>
+                    <tr><th>رقم الهاتف للتواصل</th><td>${emp.phone}</td></tr>
+                    <tr><th>المسمى الوظيفي</th><td>${emp.position}</td></tr>
+                </table>
+
+                <h3>بيانات المركبة والعهدة المخصصة:</h3>
+                <table>
+                    <tr><th>رقم لوحة المركبة</th><td>${emp.plate}</td></tr>
+                    <tr><th>طراز وموديل السيارة</th><td>${veh.model}</td></tr>
+                    <tr><th>قراءة عداد المسافة عند الاستلام</th><td>${veh.odom.toLocaleString()} كم</td></tr>
+                    <tr><th>تاريخ انتهاء تأمين السيارة</th><td>${veh.insExpiry}</td></tr>
+                </table>
+                <br/><br/>
+                <p><strong>توقيع السائق بالاستلام والمسؤولية الكاملة: __________________________</strong></p>
+            `;
+            exportToWord(`إقرار_عهدة_سيارة_${emp.name.replace(/ /g, '_')}`, html);
+        }
+
+        function exportFinancialSummaryToWord() {
+            const totals = getFinancialTotals();
+            
+            let empRows = "";
+            companyData.employees.forEach(e => {
+                empRows += `<tr><td>${e.id}</td><td>${e.name}</td><td>${e.position}</td><td>${e.salary} د.ك</td><td>${e.plate}</td></tr>`;
+            });
+
+            const html = `
+                <h1>تقرير كشف الميزانية والرواتب السنوي الكلي</h1>
+                <p style="text-align: center; font-weight: bold; color: gray;">خاص بشركة: ${activeCompany.name}</p>
+                <p>تاريخ إصدار التقرير: ${new Date().toLocaleDateString('ar-KW')}</p>
+                
+                <h3>ملخص الحسابات والموازنة المعتمدة بالدينار الكويتي:</h3>
+                <table>
+                    <tr style="background-color: #f2f2f2;"><th>البند المالي للشركة</th><th>القيمة الحالية</th></tr>
+                    <tr><td>إجمالي عوائد الطلبات والعقود</td><td>${totals.totalRev} د.ك</td></tr>
+                    <tr><td>إجمالي رواتب الموظفين (المصاريف الثابتة)</td><td style="color: red;">${totals.salaries} د.ك</td></tr>
+                    <tr><td>المصاريف التشغيلية وصيانات السيارات</td><td style="color: red;">${totals.expenses} د.ك</td></tr>
+                    <tr style="font-weight: bold; background-color: #e6f4ea;"><td>صافي الأرباح المحصلة للشركة</td><td style="color: green;">${totals.net} د.ك</td></tr>
+                </table>
+
+                <h3>كشف بأسماء ورواتب الكادر الوظيفي والعهود:</h3>
+                <table>
+                    <thead>
+                        <tr><th>معرف الموظف</th><th>الاسم الكامل</th><th>المسمى الوظيفي</th><th>الراتب الشهري</th><th>السيارة العهدة</th></tr>
+                    </thead>
+                    <tbody>
+                        ${empRows}
+                    </tbody>
+                </table>
+            `;
+            exportToWord(`كشف_التحصيل_المالي_شركة_${activeCompany.id}`, html);
+        }
+
+        function exportSingleEmployeeWord() {
+            const selectedId = document.getElementById("profile-employee-selector").value;
+            const emp = companyData.employees.find(e => e.id === selectedId);
+            if (!emp) return;
+
+            const veh = companyData.vehicles.find(v => v.plate === emp.plate) || { model: "لا يوجد", odom: 0 };
+
+            const html = `
+                <h1>ملخص السيرة الذاتية والبيانات الفردية للموظف</h1>
+                <p style="text-align: center; font-weight: bold; color: gray;">خاص بشركة: ${activeCompany.name}</p>
+                <p><strong>الاسم بالكامل:</strong> ${emp.name}</p>
+                <p><strong>الرقم المعرف الفريد:</strong> ${emp.id}</p>
+                
+                <h3>بيانات العمل والمالية:</h3>
+                <ul>
+                    <li><strong>المسمى الوظيفي:</strong> ${emp.position}</li>
+                    <li><strong>الراتب الشهري الأساسي:</strong> ${emp.salary} دينار كويتي</li>
+                    <li><strong>الرقم المدني الكويتي:</strong> ${emp.civil}</li>
+                    <li><strong>رقم الهاتف النقال:</strong> ${emp.phone}</li>
+                </ul>
+
+                <h3>بيانات السيارة والعهدة المستلمة:</h3>
+                <ul>
+                    <li><strong>لوحة السيارة:</strong> ${emp.plate}</li>
+                    <li><strong>نوع/موديل السيارة:</strong> ${veh.model}</li>
+                </ul>
+
+                <h3>التواريخ والوثائق القانونية:</h3>
+                <ul>
+                    <li><strong>تاريخ انتهاء الإقامة:</strong> ${emp.resExpiry}</li>
+                    <li><strong>تاريخ انتهاء التأمين الصحي للكويت:</strong> ${emp.insExpiry}</li>
+                </ul>
+            `;
+            exportToWord(`ملف_الموظف_${emp.name.replace(/ /g, '_')}`, html);
+        }
+    </script>
+</body>
+</html>
