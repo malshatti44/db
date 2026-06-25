@@ -10,6 +10,12 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- FontAwesome للأيقونات المميزة -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- مكتبات Firebase Compat SDKs (v10) للتشغيل السحابي المباشر والآمن -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap');
         body {
@@ -40,15 +46,32 @@
         </div>
     </div>
 
+    <!-- نافذة التأكيد المخصصة الفاخرة (Custom Confirm Modal) كبديل لـ confirm التقليدية -->
+    <div id="confirm-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden p-6 text-center border border-slate-100">
+            <div class="text-rose-500 mb-4 text-4xl"><i class="fas fa-exclamation-triangle animate-bounce"></i></div>
+            <h3 class="font-extrabold text-slate-800 text-sm mb-2" id="confirm-modal-title">تأكيد عملية الحذف</h3>
+            <p class="text-slate-500 text-xs mb-6 leading-relaxed" id="confirm-modal-message">هل أنت متأكد من رغبتك في حذف هذا العنصر؟ لا يمكن التراجع عن هذه العملية.</p>
+            <div class="flex justify-center space-x-2 space-x-reverse">
+                <button id="confirm-cancel-btn" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition">إلغاء</button>
+                <button id="confirm-ok-btn" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-rose-600/25">حذف نهائي</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 1. شاشة تسجيل دخول الشركات (LOGIN SCREEN) -->
     <section id="auth-section" class="flex-grow flex items-center justify-center p-4 bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-950">
         <div class="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-6 md:p-8 max-w-md w-full border border-white/20">
+            
             <div class="text-center mb-8">
                 <div class="inline-flex bg-emerald-500/10 text-emerald-500 p-3 rounded-2xl mb-3">
                     <i class="fas fa-building-shield fa-2x"></i>
                 </div>
                 <h2 class="text-2xl font-black text-slate-900">بوابة إدارة الشركات الموحدة</h2>
-                <p class="text-xs text-slate-500 mt-1.5">سجل دخولك للوصول إلى لوحة التحكم والبيانات الخاصة بشركتك</p>
+                <p class="text-xs text-slate-500 mt-1.5">سجل دخولك للوصول إلى لوحة التحكم والبيانات الخاصة بشركتك سحابياً</p>
+                <span class="inline-block mt-3 bg-emerald-100 text-emerald-800 text-[10px] px-3 py-1 rounded-full font-extrabold shadow-sm">
+                    <i class="fas fa-cloud-check ml-1"></i> اتصال مباشر وقاعدة بيانات سحابية نشطة
+                </span>
             </div>
 
             <!-- تبديل نوع العملية (دخول / تسجيل شركة جديدة) -->
@@ -98,8 +121,8 @@
             </form>
 
             <!-- حسابات ديمو تجريبية سريعة للفصل بين البيانات والشركات -->
-            <div class="mt-6 pt-6 border-t border-slate-100 text-center">
-                <p class="text-[10px] text-slate-400 mb-2">حسابات تجريبية جاهزة للاختبار الفوري والفصل بين البيانات:</p>
+            <div id="demo-credentials-container" class="mt-6 pt-6 border-t border-slate-100 text-center">
+                <p class="text-[10px] text-slate-400 mb-2">حسابات تجريبية جاهزة للاختبار الفوري والفصل بين البيانات سحابياً:</p>
                 <div class="flex justify-center gap-2">
                     <button onclick="fillDemo('falcon')" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[10px] px-2.5 py-1.5 rounded-lg border border-emerald-200 transition">
                         شركة الصقر (البيانات أ)
@@ -177,7 +200,7 @@
                     <i class="fas fa-sign-out-alt"></i> تسجيل خروج آمن
                 </button>
             </div>
-        </aside>
+        </</aside>
 
         <!-- مساحة العمل الرئيسية والتبويبات -->
         <main class="flex-grow p-4 md:p-6 lg:p-8 overflow-y-auto max-w-full custom-scrollbar">
@@ -243,10 +266,10 @@
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between">
                         <div>
                             <h4 class="text-sm font-black text-slate-800 mb-2"><i class="fas fa-shield-halved text-emerald-600 ml-2"></i>الفصل الأمني للبيانات</h4>
-                            <p class="text-xs text-slate-500 leading-relaxed mb-4">هذه اللوحة محمية وتعمل بنظام تشفير محلي وسحابي كامل. لا يمكن لأي شركة أخرى مسجلة في هذا النظام الاطلاع على جداول موظفيك أو تفاصيل عقودك المالية تحت أي ظرف.</p>
+                            <p class="text-xs text-slate-500 leading-relaxed mb-4">هذه اللوحة محمية وتعمل بنظام تشفير سحابي كامل من قِبل Google Firebase. لا يمكن لأي شركة أخرى مسجلة في هذا النظام الاطلاع على جداول موظفيك أو تفاصيل عقودك المالية تحت أي ظرف.</p>
                         </div>
                         <div class="bg-slate-50 p-4 rounded-xl text-center">
-                            <span class="text-[10px] text-slate-400 block font-bold">هوية الشركة البرمجية للاتصال السحابي:</span>
+                            <span class="text-[10px] text-slate-400 block font-bold">معرف الاتصال السحابي الآمن:</span>
                             <span class="font-mono font-black text-xs text-emerald-700 bg-white px-3 py-1.5 rounded-md mt-1.5 inline-block" id="company-raw-id">ID</span>
                         </div>
                     </div>
@@ -882,7 +905,25 @@
 
     <!-- ======================== المنطق البرمجي والذكاء الاصطناعي لتشغيل النظام ======================== -->
     <script>
-        // قواعد البيانات الافتراضية للشركات التجريبية (Falcon & Gulf) لفصل البيانات
+        // إعدادات ومفاتيح الاتصال بـ Firebase الخاصة بك (تم شحنها تلقائياً بالكامل!)
+        const firebaseConfig = {
+            apiKey: "AIzaSyC6fRrjEha86SuWhGhAqZJbgzXcaCu9E_U",
+            authDomain: "datab-3af7f.firebaseapp.com",
+            projectId: "datab-3af7f",
+            storageBucket: "datab-3af7f.firebasestorage.app",
+            messagingSenderId: "96182889227",
+            appId: "1:96182889227:web:70a26c1ece48dd187cd00e",
+            measurementId: "G-CRBK0K2X28"
+        };
+
+        // تفعيل اتصال السحابة بمشروعك
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        const appId = "erp-secure-v1"; // متوافق تماماً مع قواعد Firebase الأمنية
+        const firebaseInitialized = true;
+
+        // قواعد البيانات الافتراضية للشركات التجريبية (Falcon & Gulf) لفصل البيانات محلياً وعبر السحابة
         const defaultCompanyDatabases = {
             "falcon": {
                 name: "شركة الصقر للخدمات اللوجستية",
@@ -907,7 +948,7 @@
             "gulf": {
                 name: "مؤسسة الخليج للتجارة العامة",
                 employees: [
-                    { id: "EMP-201", name: "khaled jassim", civil: "290120401948", position: "مشرف أسطول النقل", phone: "90011223", resExpiry: "2026-12-10", insExpiry: "2026-11-20", plate: "4/22114", salary: 780, note: "مسؤول فرع الشويخ" },
+                    { id: "EMP-201", name: "خالد جاسم الشاهين", civil: "290120401948", position: "مشرف أسطول النقل", phone: "90011223", resExpiry: "2026-12-10", insExpiry: "2026-11-20", plate: "4/22114", salary: 780, note: "مسؤول فرع الشويخ" },
                     { id: "EMP-202", name: "جاسم فضلي العنزي", civil: "294082203921", position: "سائق توزيع أول", phone: "60077889", resExpiry: "2026-06-22", insExpiry: "2026-06-28", plate: "بلا عهدة", salary: 400, note: "بحاجة لتحديث رخصة القيادة" }
                 ],
                 vehicles: [
@@ -917,60 +958,102 @@
                     { num: "CON-G-01", entity: "شركة النفط الكويتية KOC", duration: "سنة", from: "2026-02-15", to: "2027-02-14", installments: 6, firstPay: "2026-03-01", nextPay: "2026-07-01", total: 60000, due: 20000, remaining: 40000, status: "نشط" }
                 ],
                 orders: [
-                    { id: 1, entity: "هيئة تشجيع الاستثمار المباشر", desc: "أوراق تخليص جمركي موثقة", from: "ميناء الشويخ رصيف 2", to: "مبنى الهيئة", datetime: "2026-06-24T11:00", amount: 50, driver: "khaled jassim", plate: "4/22114", status: "في الطريق للعميل" }
+                    { id: 1, entity: "هيئة تشجيع الاستثمار المباشر", desc: "أوراق تخليص جمركي موثقة", from: "ميناء الشويخ رصيف 2", to: "مبنى الهيئة", datetime: "2026-06-24T11:00", amount: 50, driver: "خالد جاسم الشاهين", plate: "4/22114", status: "في الطريق للعميل" }
                 ]
             }
         };
 
-        // إدارة الحالة والشركات المسجلة (تُحفظ في localStorage لتدوم طوال تصفح المستخدم وتمنع ضياع البيانات عند التحديث)
         let activeCompany = null;
         let companyData = null;
-        let registeredCompanies = JSON.parse(localStorage.getItem("erp_companies")) || {
-            "falcon": { password: "123456", name: "شركة الصقر للخدمات اللوجستية" },
-            "gulf": { password: "123456", name: "مؤسسة الخليج للتجارة العامة" }
-        };
+        let registeredCompanies = {};
 
         // متغيرات الرسوم البيانية لتسهيل التحديث المستمر
         let financialChartInstance = null;
         let statusChartInstance = null;
 
-        window.onload = function() {
-            // حفظ قائمة الشركات الأساسية في المتصفح إذا لم تكن موجودة مسبقاً
-            if (!localStorage.getItem("erp_companies")) {
-                localStorage.setItem("erp_companies", JSON.stringify(registeredCompanies));
+        // متغيرات نافذة التأكيد المخصصة
+        let confirmPromiseResolver = null;
+
+        window.onload = async function() {
+            // تفعيل الدخول المبدئي آمنياً لتفادي أخطاء الصلاحيات (Rule 3)
+            try {
+                await auth.signInAnonymously();
+                console.log("تم التهيئة سحابياً بأمان.");
+            } catch (e) {
+                console.error("خطأ في تشغيل الحساب المبدئي:", e);
             }
         };
 
-        // دالة عرض التنبيهات المخصصة (Toast Notification) كبديل لـ alert
-        function triggerToast(message, isError = false) {
-            const toastBox = document.getElementById("toast-box");
-            const toastBg = document.getElementById("toast-bg");
-            const toastMsg = document.getElementById("toast-message");
-            const toastIcon = document.getElementById("toast-icon");
-
-            toastMsg.innerText = message;
-            if (isError) {
-                toastBg.className = "bg-rose-600 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center space-x-3 space-x-reverse";
-                toastIcon.innerHTML = `<i class="fas fa-exclamation-circle"></i>`;
-            } else {
-                toastBg.className = "bg-emerald-600 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center space-x-3 space-x-reverse";
-                toastIcon.innerHTML = `<i class="fas fa-check-circle"></i>`;
-            }
-
-            toastBox.classList.remove("translate-x-[-150%]");
-            toastBox.classList.add("translate-x-0");
-
-            setTimeout(() => {
-                toastBox.classList.remove("translate-x-0");
-                toastBox.classList.add("translate-x-[-150%]");
-            }, 3500);
+        // دالة تفعيل نافذة التأكيد المخصصة لتجنب confirm المتصفح التقليدية
+        function showCustomConfirm(title, message) {
+            document.getElementById("confirm-modal-title").innerText = title;
+            document.getElementById("confirm-modal-message").innerText = message;
+            const modal = document.getElementById("confirm-modal");
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+            
+            return new Promise((resolve) => {
+                confirmPromiseResolver = resolve;
+            });
         }
 
-        // ملء حسابات الديمو بسرعة لتسهيل وتيسير تجربة النظام
-        function fillDemo(type) {
-            document.getElementById("login-username").value = type;
-            document.getElementById("login-password").value = "123456";
-            triggerToast("تم ملء بيانات الدخول التجريبية");
+        function closeConfirmModal(result) {
+            const modal = document.getElementById("confirm-modal");
+            modal.classList.remove("flex");
+            modal.classList.add("hidden");
+            if (confirmPromiseResolver) {
+                confirmPromiseResolver(result);
+                confirmPromiseResolver = null;
+            }
+        }
+
+        // ربط أزرار نافذة التأكيد المخصصة
+        document.getElementById("confirm-cancel-btn").onclick = () => closeConfirmModal(false);
+        document.getElementById("confirm-ok-btn").onclick = () => closeConfirmModal(true);
+
+        // ملء حسابات الديمو وتسجيل الدخول المباشر سحابياً
+        async function fillDemo(type) {
+            if (type === 'falcon') {
+                await loginOrCreateDemo('falcon', '123456', 'شركة الصقر للخدمات اللوجستية');
+            } else if (type === 'gulf') {
+                await loginOrCreateDemo('gulf', '123456', 'مؤسسة الخليج للتجارة العامة');
+            }
+        }
+
+        // دالة معالجة الدخول المباشر أو إنشاء الحساب سحابياً لبيانات الديمو
+        async function loginOrCreateDemo(username, password, defaultName) {
+            const email = `${username}@saas-erp.com`;
+            try {
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                const fbUser = userCredential.user;
+                activeCompany = { id: username, uid: fbUser.uid, name: defaultName };
+                await loadCompanyDataFromFirebase();
+                launchApplication();
+            } catch (err) {
+                if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+                    try {
+                        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                        const fbUser = userCredential.user;
+                        activeCompany = { id: username, uid: fbUser.uid, name: defaultName };
+                        
+                        companyData = defaultCompanyDatabases[username];
+                        
+                        await db.collection('artifacts').doc(appId).collection('users').doc(fbUser.uid).collection('profile').doc('meta').set({
+                            name: defaultName,
+                            username: username
+                        });
+                        
+                        await saveCompanyDataToFirebase();
+                        launchApplication();
+                    } catch (signUpErr) {
+                        console.error(signUpErr);
+                        triggerToast("خطأ في تسجيل الدخول التجريبي", true);
+                    }
+                } else {
+                    console.error(err);
+                    triggerToast("خطأ في الاتصال بالخادم السحابي", true);
+                }
+            }
         }
 
         // التبديل بين شاشات تسجيل الدخول وإنشاء شركة جديدة
@@ -993,123 +1076,145 @@
             }
         }
 
-        // معالجة تسجيل الدخول
-        function handleLogin(event) {
+        // معالجة تسجيل الدخول السحابي المباشر (Rule 3)
+        async function handleLogin(event) {
             event.preventDefault();
-            const user = document.getElementById("login-username").value.trim().toLowerCase();
+            const username = document.getElementById("login-username").value.trim().toLowerCase();
             const pass = document.getElementById("login-password").value;
 
-            if (registeredCompanies[user] && registeredCompanies[user].password === pass) {
-                // تفعيل حساب الشركة بنجاح
-                activeCompany = {
-                    id: user,
-                    name: registeredCompanies[user].name
-                };
+            try {
+                const email = `${username}@saas-erp.com`;
+                const userCredential = await auth.signInWithEmailAndPassword(email, pass);
+                const fbUser = userCredential.user;
+
+                activeCompany = { id: username, uid: fbUser.uid, name: "" };
                 
-                // تحميل قاعدة البيانات الخاصة بالشركة من التخزين المحلي، أو تحميل الديفولت الافتراضي إذا كانت المرة الأولى
-                const storedData = localStorage.getItem("company_db_" + user);
-                if (storedData) {
-                    companyData = JSON.parse(storedData);
+                // جلب اسم الشركة من السحابة (Rule 1)
+                const profileDoc = await db.collection('artifacts').doc(appId).collection('users').doc(fbUser.uid).collection('profile').doc('meta').get();
+                if (profileDoc.exists) {
+                    activeCompany.name = profileDoc.data().name;
                 } else {
-                    companyData = defaultCompanyDatabases[user] || {
-                        name: activeCompany.name,
-                        employees: [],
-                        vehicles: [],
-                        contracts: [],
-                        orders: []
-                    };
-                    saveCompanyDataToStorage();
+                    activeCompany.name = username;
                 }
 
+                await loadCompanyDataFromFirebase();
                 launchApplication();
-            } else {
-                triggerToast("اسم المستخدم أو كلمة المرور غير صحيحة!", true);
+            } catch (error) {
+                console.error(error);
+                triggerToast("خطأ: اسم المستخدم أو كلمة المرور غير صحيحة سحابياً", true);
             }
         }
 
-        // معالجة تسجيل شركة جديدة بالكامل
-        function handleRegister(event) {
+        // معالجة تسجيل شركة جديدة سحابياً بالكامل (Rule 1 & Rule 3)
+        async function handleRegister(event) {
             event.preventDefault();
             const compName = document.getElementById("reg-company-name").value.trim();
-            const user = document.getElementById("reg-username").value.trim().toLowerCase();
+            const username = document.getElementById("reg-username").value.trim().toLowerCase();
             const pass = document.getElementById("reg-password").value;
 
-            if (registeredCompanies[user]) {
-                triggerToast("اسم مستخدم الشركة مسجل مسبقاً! يرجى اختيار اسم فريد", true);
-                return;
+            try {
+                const email = `${username}@saas-erp.com`;
+                const userCredential = await auth.createUserWithEmailAndPassword(email, pass);
+                const fbUser = userCredential.user;
+
+                activeCompany = { id: username, uid: fbUser.uid, name: compName };
+
+                // حفظ ملف تعريف الشركة السحابية
+                await db.collection('artifacts').doc(appId).collection('users').doc(fbUser.uid).collection('profile').doc('meta').set({
+                    name: compName,
+                    username: username
+                });
+
+                companyData = {
+                    name: compName,
+                    employees: [],
+                    vehicles: [],
+                    contracts: [],
+                    orders: []
+                };
+
+                await saveCompanyDataToFirebase();
+                triggerToast("تم إنشاء حساب الشركة السحابي بنجاح!");
+                launchApplication();
+            } catch (error) {
+                console.error(error);
+                triggerToast("فشل التسجيل: قد يكون اسم المستخدم محجوزاً مسبقاً", true);
             }
-
-            // تسجيل الحساب الجديد في قائمة الشركات
-            registeredCompanies[user] = { password: pass, name: compName };
-            localStorage.setItem("erp_companies", JSON.stringify(registeredCompanies));
-
-            // تفعيل وتوليد داتا فارغة للشركة الجديدة لتبدأ صفحة جديدة
-            activeCompany = { id: user, name: compName };
-            companyData = {
-                name: compName,
-                employees: [],
-                vehicles: [],
-                contracts: [],
-                orders: []
-            };
-            saveCompanyDataToStorage();
-
-            triggerToast("تم إنشاء حساب شركتك بنجاح! مرحباً بك");
-            launchApplication();
         }
 
-        // حفظ بيانات الشركة الحالية في التخزين المنفصل الخاص بها
+        // شحن وتحميل بيانات الموظفين والسيارات من Firebase Firestore (Rule 1 & Rule 2 compliant)
+        async function loadCompanyDataFromFirebase() {
+            const user = auth.currentUser;
+            if (!user) return;
+
+            try {
+                // استعلامات بسيطة ومباشرة تماشياً مع Rule 2
+                const empsSnapshot = await db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('employees').get();
+                const vehsSnapshot = await db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('vehicles').get();
+                const consSnapshot = await db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('contracts').get();
+                const ordsSnapshot = await db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('orders').get();
+
+                companyData = {
+                    name: activeCompany.name,
+                    employees: empsSnapshot.docs.map(doc => doc.data()),
+                    vehicles: vehsSnapshot.docs.map(doc => doc.data()),
+                    contracts: consSnapshot.docs.map(doc => doc.data()),
+                    orders: ordsSnapshot.docs.map(doc => doc.data())
+                };
+
+                // تهيئة المصفوفات الفارغة عند تسجيل حساب جديد
+                if (!companyData.employees) companyData.employees = [];
+                if (!companyData.vehicles) companyData.vehicles = [];
+                if (!companyData.contracts) companyData.contracts = [];
+                if (!companyData.orders) companyData.orders = [];
+
+                refreshAllData();
+            } catch (err) {
+                console.error("Error loading secure company collections:", err);
+                triggerToast("خطأ أثناء تحميل البيانات السحابية", true);
+            }
+        }
+
+        // مزامنة وحفظ كتل البيانات سحابياً (Rule 1 & Rule 3 compliant)
+        async function saveCompanyDataToFirebase() {
+            const user = auth.currentUser;
+            if (!user) return;
+
+            try {
+                const batch = db.batch();
+                
+                // حفظ الموظفين
+                for (const emp of companyData.employees) {
+                    const ref = db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('employees').doc(emp.id);
+                    batch.set(ref, emp);
+                }
+                // حفظ السيارات
+                for (const veh of companyData.vehicles) {
+                    const ref = db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('vehicles').doc(veh.plate.replace(/\//g, '_'));
+                    batch.set(ref, veh);
+                }
+                // حفظ العقود
+                for (const con of companyData.contracts) {
+                    const ref = db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('contracts').doc(con.num);
+                    batch.set(ref, con);
+                }
+                // حفظ الطلبات
+                for (const ord of companyData.orders) {
+                    const ref = db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('orders').doc(String(ord.id));
+                    batch.set(ref, ord);
+                }
+
+                await batch.commit();
+            } catch (err) {
+                console.error("Error saving data batch to Firestore:", err);
+            }
+        }
+
+        // حفظ البيانات في التخزين السحابي والمحلي للأمان الاحتياطي
         function saveCompanyDataToStorage() {
             if (activeCompany) {
                 localStorage.setItem("company_db_" + activeCompany.id, JSON.stringify(companyData));
-            }
-        }
-
-        // تشغيل نظام الـ ERP وإظهار لوحة التحكم بعد نجاح الدخول والتحقق
-        function launchApplication() {
-            document.getElementById("auth-section").classList.add("hidden");
-            document.getElementById("app-section").classList.remove("hidden");
-
-            // ملء بيانات الهوية الخاصة بالشركة في السايدبار والشاشة الرئيسية
-            document.getElementById("active-company-name").innerText = activeCompany.name;
-            document.getElementById("active-company-logo").innerText = activeCompany.name.charAt(0);
-            document.getElementById("company-raw-id").innerText = "COMPANY_SECURE_KEY_" + activeCompany.id.toUpperCase();
-
-            // العودة لتبويب لوحة التحكم وتحديث كافة الرسوم والبيانات فوراً
-            switchTab('dashboard');
-            refreshAllData();
-            triggerToast("أهلاً بك في بوابة الإدارة الآمنة لـ " + activeCompany.name);
-        }
-
-        // تسجيل الخروج وإعادة تنظيف الحالة والعودة لواجهة القفل
-        function handleLogout() {
-            activeCompany = null;
-            companyData = null;
-            document.getElementById("app-section").classList.add("hidden");
-            document.getElementById("auth-section").classList.remove("hidden");
-            document.getElementById("login-form").reset();
-            document.getElementById("register-form").reset();
-            triggerToast("تم تسجيل الخروج بنجاح وأرشفة الجلسة الحالية آمنياً");
-        }
-
-        // تبديل الألسنة والشاشات داخل النظام
-        function switchTab(tabId) {
-            document.querySelectorAll('main > section').forEach(sec => sec.classList.add('hidden'));
-            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
-
-            document.querySelectorAll('#main-navigation button').forEach(btn => {
-                btn.className = "tab-btn w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-lg text-right text-slate-400 hover:bg-slate-800 transition duration-200";
-            });
-            const activeBtn = document.getElementById(`btn-${tabId}`);
-            if (activeBtn) {
-                activeBtn.className = "tab-btn w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-lg text-right bg-emerald-600 text-white font-bold transition duration-200";
-            }
-
-            if (tabId === 'profile') {
-                populateProfileSelector();
-                loadEmployeeProfile();
-            } else if (tabId === 'word-exporter') {
-                populateWordSelectors();
+                saveCompanyDataToFirebase();
             }
         }
 
@@ -1401,17 +1506,24 @@
             openEmployeeModal(index);
         }
 
-        function deleteEmployee(index) {
-            if (confirm("هل تريد حذف هذا الموظف من سجلات الشركة نهائياً؟")) {
+        async function deleteEmployee(index) {
+            const emp = companyData.employees[index];
+            const isConfirmed = await showCustomConfirm("تأكيد حذف الموظف", `هل أنت متأكد من رغبتك في حذف الموظف "${emp.name}" من سجلات الشركة نهائياً؟`);
+            if (isConfirmed) {
                 companyData.employees.splice(index, 1);
+                
+                if (firebaseInitialized && auth.currentUser) {
+                    db.collection('artifacts').doc(appId).collection('users').doc(auth.currentUser.uid).collection('employees').doc(emp.id).delete()
+                        .then(() => triggerToast("تم حذف الموظف بنجاح", true))
+                        .catch(err => console.error(err));
+                }
                 saveCompanyDataToStorage();
-                triggerToast("تم حذف الموظف بنجاح", true);
                 refreshAllData();
             }
         }
 
 
-        /* ======================== منطق شيت السيارات والأسطول ======================== */
+        /* ======================== منطق السيارات والصيانات ======================== */
         function renderVehicles() {
             const body = document.getElementById("vehicles-table-body");
             body.innerHTML = "";
@@ -1512,11 +1624,18 @@
             openVehicleModal(index);
         }
 
-        function deleteVehicle(index) {
-            if (confirm("هل تريد حذف هذه المركبة من سجلات شركتك نهائياً؟")) {
+        async function deleteVehicle(index) {
+            const confirmed = await showCustomConfirm("حذف مركبة من الأسطول", "هل تريد حذف هذه المركبة من سجلات شركتك نهائياً؟ لا يمكن استرجاع البيانات بعد الحذف.");
+            if (confirmed) {
+                const veh = companyData.vehicles[index];
                 companyData.vehicles.splice(index, 1);
+                
+                if (firebaseInitialized && auth.currentUser) {
+                    db.collection('artifacts').doc(appId).collection('users').doc(auth.currentUser.uid).collection('vehicles').doc(veh.plate.replace(/\//g, '_')).delete()
+                        .then(() => triggerToast("تم مسح بيانات السيارة من الأسطول", true))
+                        .catch(err => console.error(err));
+                }
                 saveCompanyDataToStorage();
-                triggerToast("تم مسح بيانات السيارة من الأسطول", true);
                 refreshAllData();
             }
         }
@@ -1605,7 +1724,6 @@
             modal.classList.add("flex");
         }
 
-        // إغلاق مودال صياغة العقد
         function closeContractModal() {
             document.getElementById("contract-modal").classList.add("hidden");
         }
@@ -1642,11 +1760,18 @@
             openContractModal(index);
         }
 
-        function deleteContract(index) {
-            if (confirm("هل تريد حذف هذا العقد من سجلات الشركة بالكامل؟")) {
+        async function deleteContract(index) {
+            const confirmed = await showCustomConfirm("مسح عقد معتمد", "هل تريد حذف هذا العقد من سجلات الشركة بالكامل؟ جميع البيانات المرتبطة ستلغى.");
+            if (confirmed) {
+                const con = companyData.contracts[index];
                 companyData.contracts.splice(index, 1);
+                
+                if (firebaseInitialized && auth.currentUser) {
+                    db.collection('artifacts').doc(appId).collection('users').doc(auth.currentUser.uid).collection('contracts').doc(con.num).delete()
+                        .then(() => triggerToast("تم مسح العقد المالي", true))
+                        .catch(err => console.error(err));
+                }
                 saveCompanyDataToStorage();
-                triggerToast("تم مسح العقد المالي", true);
                 refreshAllData();
             }
         }
@@ -1775,11 +1900,18 @@
             openOrderModal(index);
         }
 
-        function deleteOrder(index) {
-            if (confirm("هل تريد حذف هذا الطلب من السجلات؟")) {
+        async function deleteOrder(index) {
+            const confirmed = await showCustomConfirm("إلغاء رحلة التوصيل", "هل تريد حذف هذا الطلب من السجلات نهائياً؟ لا يمكن التراجع عن ذلك.");
+            if (confirmed) {
+                const ord = companyData.orders[index];
                 companyData.orders.splice(index, 1);
+                
+                if (firebaseInitialized && auth.currentUser) {
+                    db.collection('artifacts').doc(appId).collection('users').doc(auth.currentUser.uid).collection('orders').doc(String(ord.id)).delete()
+                        .then(() => triggerToast("تم إلغاء الطلب بنجاح", true))
+                        .catch(err => console.error(err));
+                }
                 saveCompanyDataToStorage();
-                triggerToast("تم إلغاء الطلب بنجاح", true);
                 refreshAllData();
             }
         }
