@@ -37,7 +37,7 @@
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
     <!-- نظام التنبيهات المخصص (Toast Notification) لتجنب alert المزعجة -->
-    <div id="toast-box" class="fixed top-5 left-5 z-50 transform translate-x-[-150%] transition-transform duration-300 ease-in-out">
+    <div id="toast-box" class="fixed top-5 left-5 z-50 transform translate-x-[-150%] transition-transform duration-300 ease-in-out font-bold">
         <div id="toast-bg" class="bg-emerald-600 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center space-x-3 space-x-reverse">
             <span id="toast-icon" class="text-xl"><i class="fas fa-check-circle"></i></span>
             <div>
@@ -983,34 +983,29 @@
             // الاستماع لحالة تسجيل الدخول السحابي المباشر ومنع الخروج التلقائي عند التحديث (Rule 3)
             auth.onAuthStateChanged(async (user) => {
                 if (user) {
-                    if (user.isAnonymous) {
-                        // إذا كان تسجيل دخول مجهول مؤقت، نعرض شاشة الدخول فقط دون مشاكل
+                    // إذا كان هناك مستخدم حقيقي مسجل دخوله (وليس مجهولاً)
+                    const username = user.email.split('@')[0];
+                    activeCompany = { id: username, uid: user.uid, name: "" };
+                    
+                    try {
+                        // جلب اسم الشركة من السحابة (Rule 1)
+                        const profileDoc = await db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('profile').doc('meta').get();
+                        if (profileDoc.exists) {
+                            activeCompany.name = profileDoc.data().name;
+                        } else {
+                            activeCompany.name = username;
+                        }
+
+                        await loadCompanyDataFromFirebase();
+                        launchApplication();
+                    } catch (e) {
+                        console.error("Error loading profile:", e);
+                        // في حال حدوث خطأ في الصلاحيات، نعرض شاشة تسجيل الدخول لإدخال البيانات مجدداً
                         document.getElementById("auth-section").classList.remove("hidden");
                         document.getElementById("app-section").classList.add("hidden");
-                    } else {
-                        // إذا كان المستخدم مسجل دخول بإيميل الشركة، نقوم بتحميل البيانات تلقائياً دون إخراجه
-                        const username = user.email.split('@')[0];
-                        activeCompany = { id: username, uid: user.uid, name: "" };
-                        
-                        try {
-                            // جلب اسم الشركة من السحابة (Rule 1)
-                            const profileDoc = await db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('profile').doc('meta').get();
-                            if (profileDoc.exists) {
-                                activeCompany.name = profileDoc.data().name;
-                            } else {
-                                activeCompany.name = username;
-                            }
-
-                            await loadCompanyDataFromFirebase();
-                            launchApplication();
-                        } catch (e) {
-                            console.error("Error loading profile:", e);
-                            document.getElementById("auth-section").classList.remove("hidden");
-                            document.getElementById("app-section").classList.add("hidden");
-                        }
                     }
                 } else {
-                    // إذا لم يكن هناك مستخدم، نعرض شاشة تسجيل الدخول مباشرة دون محاولة تسجيل دخول مجهول مرفوض
+                    // إذا لم يكن هناك مستخدم، نعرض شاشة تسجيل الدخول مباشرة
                     document.getElementById("auth-section").classList.remove("hidden");
                     document.getElementById("app-section").classList.add("hidden");
                 }
@@ -1063,7 +1058,10 @@
                 await loadCompanyDataFromFirebase();
                 launchApplication();
             } catch (err) {
-                if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
+                // معالجة الأخطاء السحابية بشكل مفصل للمستخدم
+                if (err.code === 'auth/operation-not-allowed') {
+                    triggerToast("خطأ: يرجى تفعيل Email/Password في قسم Authentication بموقع Firebase لتشغيل النظام.", true);
+                } else if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
                     try {
                         const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                         const fbUser = userCredential.user;
@@ -1081,11 +1079,15 @@
                         launchApplication();
                     } catch (signUpErr) {
                         console.error(signUpErr);
-                        triggerToast("خطأ في تسجيل الدخول التجريبي", true);
+                        if (signUpErr.code === 'auth/operation-not-allowed') {
+                            triggerToast("يجب تفعيل خيار Email/Password في لوحة تحكم Firebase Console أولاً.", true);
+                        } else {
+                            triggerToast("خطأ في تسجيل الدخول التجريبي: " + signUpErr.message, true);
+                        }
                     }
                 } else {
                     console.error(err);
-                    triggerToast("خطأ في الاتصال بالخادم السحابي", true);
+                    triggerToast("خطأ في الاتصال بالخادم السحابي: " + err.message, true);
                 }
             }
         }
@@ -1135,7 +1137,13 @@
                 launchApplication();
             } catch (error) {
                 console.error(error);
-                triggerToast("خطأ: اسم المستخدم أو كلمة المرور غير صحيحة سحابياً", true);
+                if (error.code === 'auth/operation-not-allowed') {
+                    triggerToast("تنبيه: يجب تفعيل Email/Password في لوحة Firebase الخاصة بك.", true);
+                } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                    triggerToast("اسم مستخدم الشركة أو كلمة المرور غير صحيحة سحابياً.", true);
+                } else {
+                    triggerToast("حدث خطأ أثناء تسجيل الدخول: " + error.message, true);
+                }
             }
         }
 
@@ -1172,7 +1180,15 @@
                 launchApplication();
             } catch (error) {
                 console.error(error);
-                triggerToast("فشل التسجيل: قد يكون اسم المستخدم محجوزاً مسبقاً", true);
+                if (error.code === 'auth/operation-not-allowed') {
+                    triggerToast("يجب تفعيل خيار Email/Password في لوحة تحكم Firebase Console أولاً.", true);
+                } else if (error.code === 'auth/email-already-in-use') {
+                    triggerToast("اسم مستخدم الشركة مسجل مسبقاً سحابياً، يرجى اختيار يوزر نيم آخر.", true);
+                } else if (error.code === 'auth/weak-password') {
+                    triggerToast("كلمة المرور ضعيفة جداً! يرجى كتابة 6 خانات أو أكثر.", true);
+                } else {
+                    triggerToast("فشل التسجيل السحابي: " + error.message, true);
+                }
             }
         }
 
@@ -1205,42 +1221,68 @@
                 refreshAllData();
             } catch (err) {
                 console.error("Error loading secure company collections:", err);
-                triggerToast("خطأ أثناء تحميل البيانات السحابية", true);
+                if (err.code === "permission-denied") {
+                    triggerToast("تم رفض إذن القراءة من Firestore. تأكد من تفعيل Firestore في وضع الاختبار (Test Mode).", true);
+                } else {
+                    triggerToast("خطأ أثناء تحميل البيانات السحابية: " + err.message, true);
+                }
             }
         }
 
-        // مزامنة وحفظ كتل البيانات سحابياً (Rule 1 & Rule 3 compliant)
+        // مزامنة وحفظ كتل البيانات سحابياً بشكل صحيح وآمن لتفادي أخطاء commit الفارغة (Rule 1 & Rule 3 compliant)
         async function saveCompanyDataToFirebase() {
             const user = auth.currentUser;
             if (!user) return;
 
             try {
                 const batch = db.batch();
+                let hasOperations = false;
                 
                 // حفظ الموظفين
-                for (const emp of companyData.employees) {
-                    const ref = db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('employees').doc(emp.id);
-                    batch.set(ref, emp);
+                if (companyData.employees && companyData.employees.length > 0) {
+                    for (const emp of companyData.employees) {
+                        const ref = db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('employees').doc(emp.id);
+                        batch.set(ref, emp);
+                        hasOperations = true;
+                    }
                 }
                 // حفظ السيارات
-                for (const veh of companyData.vehicles) {
-                    const ref = db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('vehicles').doc(veh.plate.replace(/\//g, '_'));
-                    batch.set(ref, veh);
+                if (companyData.vehicles && companyData.vehicles.length > 0) {
+                    for (const veh of companyData.vehicles) {
+                        const ref = db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('vehicles').doc(veh.plate.replace(/\//g, '_'));
+                        batch.set(ref, veh);
+                        hasOperations = true;
+                    }
                 }
                 // حفظ العقود
-                for (const con of companyData.contracts) {
-                    const ref = db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('contracts').doc(con.num);
-                    batch.set(ref, con);
+                if (companyData.contracts && companyData.contracts.length > 0) {
+                    for (const con of companyData.contracts) {
+                        const ref = db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('contracts').doc(con.num);
+                        batch.set(ref, con);
+                        hasOperations = true;
+                    }
                 }
                 // حفظ الطلبات
-                for (const ord of companyData.orders) {
-                    const ref = db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('orders').doc(String(ord.id));
-                    batch.set(ref, ord);
+                if (companyData.orders && companyData.orders.length > 0) {
+                    for (const ord of companyData.orders) {
+                        const ref = db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('orders').doc(String(ord.id));
+                        batch.set(ref, ord);
+                        hasOperations = true;
+                    }
                 }
 
-                await batch.commit();
+                // تنفيذ الـ Batch فقط إذا كان يحتوي على عمليات حقيقية لتفادي أخطاء Firebase
+                if (hasOperations) {
+                    await batch.commit();
+                    console.log("تمت مزامنة البيانات مع Firestore.");
+                }
             } catch (err) {
                 console.error("Error saving data batch to Firestore:", err);
+                if (err.code === "permission-denied") {
+                    triggerToast("تم رفض الكتابة في Firestore. يرجى مراجعة قواعد الحماية وتفعيل وضع الاختبار.", true);
+                } else {
+                    triggerToast("حدث خطأ أثناء مزامنة البيانات: " + err.message, true);
+                }
             }
         }
 
@@ -1446,7 +1488,7 @@
                     <td class="p-3 font-mono">${emp.phone}</td>
                     <td class="p-3 font-mono">${emp.resExpiry}</td>
                     <td class="p-3 font-mono">${emp.insExpiry}</td>
-                    <td class="p-3"><span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-mono font-bold">${emp.plate}</span></td>
+                    <td class="p-3"><span class="bg-slate-100 text-slate-700 px-2.5 py-1 rounded font-mono font-bold">${emp.plate}</span></td>
                     <td class="p-3 font-bold">${emp.salary} د.ك</td>
                     <td class="p-3 text-center">
                         <div class="flex justify-center space-x-1 space-x-reverse">
@@ -1795,7 +1837,7 @@
         }
 
         async function deleteContract(index) {
-            const confirmed = await showCustomConfirm("مسح عقد معتمد", "هل تريد حذف هذا العقد من سجلات الشركة بالكامل؟ جميع البيانات المرتبطة ستلغى.");
+            const confirmed = await showCustomConfirm("مَسح عقد معتمد", "هل تريد حذف هذا العقد من سجلات الشركة بالكامل؟ جميع البيانات المرتبطة ستلغى.");
             if (confirmed) {
                 const con = companyData.contracts[index];
                 companyData.contracts.splice(index, 1);
