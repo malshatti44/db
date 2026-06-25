@@ -11,7 +11,7 @@
     <!-- FontAwesome للأيقونات المميزة -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- مكتبات Firebase Compat SDKs (v10) للتشغيل السحابي المباشر والآمن -->
+    <!-- مكتبات Firebase (v10) للتشغيل السحابي المباشر والآمن من Google -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -36,7 +36,7 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
-    <!-- نظام التنبيهات المخصص (Toast Notification) لتجنب alert البوب أب المزعجة -->
+    <!-- نظام التنبيهات المخصص (Toast Notification) لتجنب alert المزعجة -->
     <div id="toast-box" class="fixed top-5 left-5 z-50 transform translate-x-[-150%] transition-transform duration-300 ease-in-out">
         <div id="toast-bg" class="bg-emerald-600 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center space-x-3 space-x-reverse">
             <span id="toast-icon" class="text-xl"><i class="fas fa-check-circle"></i></span>
@@ -200,7 +200,7 @@
                     <i class="fas fa-sign-out-alt"></i> تسجيل خروج آمن
                 </button>
             </div>
-        </</aside>
+        </aside>
 
         <!-- مساحة العمل الرئيسية والتبويبات -->
         <main class="flex-grow p-4 md:p-6 lg:p-8 overflow-y-auto max-w-full custom-scrollbar">
@@ -870,20 +870,20 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block mb-1 text-slate-500">اسم السائق المسؤول</label>
-                        <select id="ord-driver" class="w-full p-2 border border-slate-200 rounded bg-white">
+                        <select id="ord-driver" class="w-full p-2 border border-slate-200 rounded bg-white font-bold">
                             <!-- سيتم التعبئة ديناميكياً -->
                         </select>
                     </div>
                     <div>
                         <label class="block mb-1 text-slate-500">رقم لوحة السيارة</label>
-                        <select id="ord-plate" class="w-full p-2 border border-slate-200 rounded bg-white">
+                        <select id="ord-plate" class="w-full p-2 border border-slate-200 rounded bg-white font-bold">
                             <!-- سيتم التعبئة ديناميكياً -->
                         </select>
                     </div>
                 </div>
                 <div>
                     <label class="block mb-1 text-slate-500">حالة الطلب</label>
-                    <select id="ord-status" class="w-full p-2 border border-slate-200 rounded bg-white">
+                    <select id="ord-status" class="w-full p-2 border border-slate-200 rounded bg-white font-bold">
                         <option value="جاري الاستلام">جاري الاستلام</option>
                         <option value="في الطريق للعميل">في الطريق للعميل</option>
                         <option value="تم التسليم والتحصيل">تم التسليم والتحصيل</option>
@@ -964,7 +964,12 @@
         };
 
         let activeCompany = null;
-        let companyData = null;
+        let companyData = {
+            employees: [],
+            vehicles: [],
+            contracts: [],
+            orders: []
+        };
         let registeredCompanies = {};
 
         // متغيرات الرسوم البيانية لتسهيل التحديث المستمر
@@ -974,14 +979,42 @@
         // متغيرات نافذة التأكيد المخصصة
         let confirmPromiseResolver = null;
 
-        window.onload = async function() {
-            // تفعيل الدخول المبدئي آمنياً لتفادي أخطاء الصلاحيات (Rule 3)
-            try {
-                await auth.signInAnonymously();
-                console.log("تم التهيئة سحابياً بأمان.");
-            } catch (e) {
-                console.error("خطأ في تشغيل الحساب المبدئي:", e);
-            }
+        window.onload = function() {
+            // الاستماع لحالة تسجيل الدخول السحابي المباشر ومنع الخروج التلقائي عند التحديث (Rule 3)
+            auth.onAuthStateChanged(async (user) => {
+                if (user) {
+                    if (user.isAnonymous) {
+                        // إذا كان تسجيل دخول مجهول مؤقت، نعرض شاشة الدخول فقط دون مشاكل
+                        document.getElementById("auth-section").classList.remove("hidden");
+                        document.getElementById("app-section").classList.add("hidden");
+                    } else {
+                        // إذا كان المستخدم مسجل دخول بإيميل الشركة، نقوم بتحميل البيانات تلقائياً دون إخراجه
+                        const username = user.email.split('@')[0];
+                        activeCompany = { id: username, uid: user.uid, name: "" };
+                        
+                        try {
+                            // جلب اسم الشركة من السحابة (Rule 1)
+                            const profileDoc = await db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('profile').doc('meta').get();
+                            if (profileDoc.exists) {
+                                activeCompany.name = profileDoc.data().name;
+                            } else {
+                                activeCompany.name = username;
+                            }
+
+                            await loadCompanyDataFromFirebase();
+                            launchApplication();
+                        } catch (e) {
+                            console.error("Error loading profile:", e);
+                            document.getElementById("auth-section").classList.remove("hidden");
+                            document.getElementById("app-section").classList.add("hidden");
+                        }
+                    }
+                } else {
+                    // إذا لم يكن هناك مستخدم، نعرض شاشة تسجيل الدخول مباشرة دون محاولة تسجيل دخول مجهول مرفوض
+                    document.getElementById("auth-section").classList.remove("hidden");
+                    document.getElementById("app-section").classList.add("hidden");
+                }
+            });
         };
 
         // دالة تفعيل نافذة التأكيد المخصصة لتجنب confirm المتصفح التقليدية
@@ -1030,7 +1063,7 @@
                 await loadCompanyDataFromFirebase();
                 launchApplication();
             } catch (err) {
-                if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+                if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
                     try {
                         const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                         const fbUser = userCredential.user;
@@ -1038,6 +1071,7 @@
                         
                         companyData = defaultCompanyDatabases[username];
                         
+                        // حفظ البيانات تحت المسارات المعتمدة للشركة
                         await db.collection('artifacts').doc(appId).collection('users').doc(fbUser.uid).collection('profile').doc('meta').set({
                             name: defaultName,
                             username: username
@@ -1412,7 +1446,7 @@
                     <td class="p-3 font-mono">${emp.phone}</td>
                     <td class="p-3 font-mono">${emp.resExpiry}</td>
                     <td class="p-3 font-mono">${emp.insExpiry}</td>
-                    <td class="p-3"><span class="bg-slate-100 text-slate-700 px-2.5 py-1 rounded font-mono font-bold">${emp.plate}</span></td>
+                    <td class="p-3"><span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-mono font-bold">${emp.plate}</span></td>
                     <td class="p-3 font-bold">${emp.salary} د.ك</td>
                     <td class="p-3 text-center">
                         <div class="flex justify-center space-x-1 space-x-reverse">
