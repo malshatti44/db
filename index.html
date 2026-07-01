@@ -1450,7 +1450,7 @@
             } catch (err) {
                 console.error("Error loading secure company collections:", err);
                 if (err.message && err.message.includes("permission-denied")) {
-                    showErrorBanner("خطأ: تم رفض إذن القراءة من السحابة! تأكد من ضبط قواعد حماية (Firestore Rules) إلى allow read, write: if true;");
+                    showErrorBanner("خطأ: تم رفض إذن القراءة من السحابة! افتح Firestore Rules في لوحة Firebase وطبّق قواعد الحماية الموجودة في ملف README الخاص بالمشروع.");
                 } else {
                     showErrorBanner("خطأ أثناء جلب الجداول السحابية: " + err.message);
                 }
