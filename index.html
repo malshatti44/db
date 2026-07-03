@@ -1253,6 +1253,19 @@
             }
         }
 
+        // ترجمة أخطاء Firebase إلى رسائل عربية دقيقة مع إظهار كود الخطأ الفعلي للتشخيص
+        function describeAuthError(error) {
+            const code = (error && error.code) || "";
+            if (code === 'auth/operation-not-allowed') return "تسجيل الدخول معطل! فعّل خيار (Email/Password) في قسم Authentication ← Sign-in method بلوحة تحكم Firebase.";
+            if (code === 'auth/user-not-found' || code === 'auth/wrong-password' || code === 'auth/invalid-credential') return "اسم مستخدم الشركة أو كلمة المرور غير صحيحة.";
+            if (code === 'auth/email-already-in-use') return "اسم المستخدم مسجل مسبقاً، اختر اسماً آخر.";
+            if (code === 'auth/weak-password') return "كلمة المرور ضعيفة — اكتب 6 خانات أو أكثر.";
+            if (code === 'auth/too-many-requests') return "محاولات كثيرة متتالية — انتظر بضع دقائق ثم أعد المحاولة.";
+            if (code === 'auth/network-request-failed') return "تعذر الوصول لخوادم Firebase — تحقق من الإنترنت أو جرّب شبكة أخرى (بعض شبكات الشركات تحجب خدمات Google).";
+            if (code.includes('api-key') || code.includes('invalid-api-key') || code === 'auth/app-deleted' || code === 'auth/project-not-found') return "مفاتيح الاتصال في الكود لا تطابق مشروع Firebase! إذا أنشأت مشروعاً جديداً باسم مختلف عن (datab-3af7f) يجب تحديث firebaseConfig في index.html — راجع الخطوة 4 في README.";
+            return "خطأ سحابي غير متوقع — الكود: " + (code || (error && error.message) || "غير معروف") + ". أرسل صورة هذه الرسالة للدعم.";
+        }
+
         // دالة معالجة الدخول المباشر أو إنشاء الحساب سحابياً لبيانات الديمو
         async function loginOrCreateDemo(username, password, defaultName) {
             if (!firebaseInitialized) {
@@ -1287,15 +1300,11 @@
                         launchApplication();
                     } catch (signUpErr) {
                         console.error(signUpErr);
-                        if (signUpErr.code === 'auth/operation-not-allowed') {
-                            showErrorBanner("يرجى تفعيل طريقة الدخول بالبريد الإلكتروني (Email/Password) في لوحة Firebase الخاصة بك.");
-                        } else {
-                            showErrorBanner("حدث خطأ أثناء إنشاء حساب الديمو: " + signUpErr.message);
-                        }
+                        showErrorBanner("تعذر إنشاء حساب الديمو: " + describeAuthError(signUpErr));
                     }
                 } else {
                     console.error(err);
-                    showErrorBanner("فشل الاتصال بالخادم السحابي لـ Firebase. تأكد من تفعيل Firestore في مشروعك.");
+                    showErrorBanner(describeAuthError(err));
                 }
             }
         }
@@ -1351,13 +1360,7 @@
                 launchApplication();
             } catch (error) {
                 console.error(error);
-                if (error.code === 'auth/operation-not-allowed') {
-                    showErrorBanner("يرجى تفعيل خيار البريد الإلكتروني وكلمة المرور (Email/Password) في قسم Authentication بمشروع Firebase الخاص بك.");
-                } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-                    showErrorBanner("اسم مستخدم الشركة أو كلمة المرور غير صحيحة سحابياً.");
-                } else {
-                    showErrorBanner("خطأ سحابي: " + error.message);
-                }
+                showErrorBanner(describeAuthError(error));
             } finally {
                 setFormBusy(event.target, false);
             }
@@ -1408,15 +1411,7 @@
                 launchApplication();
             } catch (error) {
                 console.error(error);
-                if (error.code === 'auth/operation-not-allowed') {
-                    showErrorBanner("يرجى تفعيل خيار البريد الإلكتروني (Email/Password) في تبويب Authentication داخل لوحة تحكم Firebase أولاً.");
-                } else if (error.code === 'auth/email-already-in-use') {
-                    showErrorBanner("اسم المستخدم للشركة مسجل مسبقاً سحابياً، يرجى اختيار يوزر نيم آخر.");
-                } else if (error.code === 'auth/weak-password') {
-                    showErrorBanner("كلمة المرور ضعيفة جداً! يرجى كتابة 6 خانات أو أكثر لحماية حسابك.");
-                } else {
-                    showErrorBanner("خطأ في تسجيل حساب جديد: " + error.message);
-                }
+                showErrorBanner(describeAuthError(error));
             } finally {
                 setFormBusy(event.target, false);
             }
