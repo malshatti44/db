@@ -111,13 +111,7 @@
                 </span>
             </div>
 
-            <!-- تبديل نوع العملية (دخول / تسجيل شركة جديدة) -->
-            <div class="flex bg-slate-100 p-1 rounded-lg mb-6 text-xs font-bold">
-                <button onclick="toggleAuthTab('login')" id="tab-login-btn" class="flex-1 py-2.5 rounded-md text-center bg-white text-slate-900 shadow-sm transition">تسجيل الدخول</button>
-                <button onclick="toggleAuthTab('register')" id="tab-register-btn" class="flex-1 py-2.5 rounded-md text-center text-slate-500 transition">تسجيل شركة جديدة</button>
-            </div>
-
-            <!-- نموذج تسجيل الدخول -->
+            <!-- نموذج تسجيل الدخول (إنشاء حسابات الشركات يتم يدوياً من لوحة Firebase ← Authentication ← Add user) -->
             <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4 text-xs font-bold text-slate-700">
                 <div>
                     <label class="block mb-1.5">اسم مستخدم الشركة (أو البريد)</label>
@@ -135,25 +129,6 @@
                 </div>
                 <button type="submit" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-extrabold transition shadow-lg shadow-emerald-600/20">
                     دخول إلى لوحة التحكم <i class="fas fa-arrow-left mr-1"></i>
-                </button>
-            </form>
-
-            <!-- نموذج تسجيل شركة جديدة -->
-            <form id="register-form" onsubmit="handleRegister(event)" class="space-y-4 text-xs font-bold text-slate-700 hidden">
-                <div>
-                    <label class="block mb-1.5">اسم الشركة الرسمي</label>
-                    <input type="text" id="reg-company-name" required placeholder="مثال: شركة النخبة التجارية" class="w-full p-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50">
-                </div>
-                <div>
-                    <label class="block mb-1.5">اسم المستخدم للشركة (بالإنجليزي - فريد)</label>
-                    <input type="text" id="reg-username" required placeholder="مثال: elite" class="w-full p-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50">
-                </div>
-                <div>
-                    <label class="block mb-1.5">كلمة المرور</label>
-                    <input type="password" id="reg-password" required placeholder="••••••••" class="w-full p-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50">
-                </div>
-                <button type="submit" class="w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-extrabold transition shadow-lg">
-                    إنشاء حساب الشركة والبدء فوراً <i class="fas fa-plus mr-1"></i>
                 </button>
             </form>
 
@@ -225,6 +200,10 @@
                     <button onclick="switchTab('orders')" class="tab-btn w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-lg text-right text-slate-400 hover:bg-slate-800" id="btn-orders">
                         <i class="fas fa-shipping-fast w-5 text-center"></i>
                         <span>متابعة الطلبات والتوصيل</span>
+                    </button>
+                    <button onclick="switchTab('driver-report')" class="tab-btn w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-lg text-right text-slate-400 hover:bg-slate-800" id="btn-driver-report">
+                        <i class="fas fa-chart-line w-5 text-center"></i>
+                        <span>تقرير السائقين الشهري</span>
                     </button>
                     <button onclick="switchTab('profile')" class="tab-btn w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-lg text-right text-slate-400 hover:bg-slate-800" id="btn-profile">
                         <i class="fas fa-user-id w-5 text-center"></i>
@@ -485,6 +464,54 @@
                                 </tr>
                             </thead>
                             <tbody id="orders-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5.5 تقرير السائقين الشهري (DRIVER MONTHLY REPORT) -->
+            <section id="tab-driver-report" class="hidden space-y-4">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                    <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                        <div>
+                            <h3 class="text-md font-black text-slate-800"><i class="fas fa-chart-line text-emerald-600 ml-2"></i>تقرير الطلبات الشهرية لكل سائق</h3>
+                            <p class="text-xs text-slate-400 mt-1">عدد طلبات كل سائق خلال الشهر مع مجموع مبالغ الطلبات، ويمكنك إضافة مبلغ إجمالي يدوي لأي سائق أو إضافة طلب جديد بمبلغه مباشرة</p>
+                        </div>
+                        <div class="w-full md:w-56">
+                            <label class="block text-xs font-bold text-slate-500 mb-1">اختر الشهر</label>
+                            <input type="month" id="report-month" onchange="renderDriverReport()" class="w-full p-2.5 border border-slate-200 rounded-lg text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                        </div>
+                    </div>
+
+                    <!-- ملخص الشهر المحدد -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                        <div class="bg-blue-50 border border-blue-100 p-4 rounded-xl">
+                            <span class="text-xs text-blue-800 font-bold block">إجمالي طلبات الشهر</span>
+                            <span class="text-2xl font-black text-blue-700 block mt-1" id="report-total-orders">0</span>
+                        </div>
+                        <div class="bg-emerald-50 border border-emerald-100 p-4 rounded-xl">
+                            <span class="text-xs text-emerald-800 font-bold block">مجموع مبالغ الطلبات</span>
+                            <span class="text-2xl font-black text-emerald-700 block mt-1" id="report-total-amount">0 د.ك</span>
+                        </div>
+                        <div class="bg-slate-900 text-white p-4 rounded-xl">
+                            <span class="text-xs text-emerald-400 font-bold block">الإجمالي الكلي (مع المبالغ اليدوية)</span>
+                            <span class="text-2xl font-black text-emerald-400 block mt-1" id="report-grand-total">0 د.ك</span>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-right text-xs border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-600 border-b border-slate-200">
+                                    <th class="p-3 font-black">السائق</th>
+                                    <th class="p-3 font-black text-center">عدد طلبات الشهر</th>
+                                    <th class="p-3 font-black">مجموع مبالغ الطلبات</th>
+                                    <th class="p-3 font-black">مبلغ إجمالي يدوي (د.ك)</th>
+                                    <th class="p-3 font-black">الإجمالي الكلي</th>
+                                    <th class="p-3 font-black text-center">العمليات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="driver-report-table-body"></tbody>
                         </table>
                     </div>
                 </div>
@@ -1162,7 +1189,7 @@
         }
 
         // التنقل بين أقسام النظام المختلفة
-        const APP_TABS = ["dashboard", "employees", "vehicles", "contracts", "orders", "profile", "financials", "word-exporter"];
+        const APP_TABS = ["dashboard", "employees", "vehicles", "contracts", "orders", "driver-report", "profile", "financials", "word-exporter"];
         function switchTab(tab) {
             APP_TABS.forEach(t => {
                 document.getElementById("tab-" + t).classList.toggle("hidden", t !== tab);
@@ -1180,6 +1207,8 @@
                 loadEmployeeProfile();
             } else if (tab === "word-exporter") {
                 populateWordSelectors();
+            } else if (tab === "driver-report") {
+                renderDriverReport();
             }
 
             toggleSidebar(false);
@@ -1324,27 +1353,6 @@
             }
         }
 
-        // التبديل بين شاشات تسجيل الدخول وإنشاء شركة جديدة
-        function toggleAuthTab(tab) {
-            hideErrorBanner();
-            const loginBtn = document.getElementById("tab-login-btn");
-            const regBtn = document.getElementById("tab-register-btn");
-            const loginForm = document.getElementById("login-form");
-            const regForm = document.getElementById("register-form");
-
-            if (tab === 'login') {
-                loginBtn.className = "flex-1 py-2.5 rounded-md text-center bg-white text-slate-900 shadow-sm transition";
-                regBtn.className = "flex-1 py-2.5 rounded-md text-center text-slate-500 transition";
-                loginForm.classList.remove("hidden");
-                regForm.classList.add("hidden");
-            } else {
-                regBtn.className = "flex-1 py-2.5 rounded-md text-center bg-white text-slate-900 shadow-sm transition";
-                loginBtn.className = "flex-1 py-2.5 rounded-md text-center text-slate-500 transition";
-                regForm.classList.remove("hidden");
-                loginForm.classList.add("hidden");
-            }
-        }
-
         // معالجة تسجيل الدخول السحابي المباشر (Rule 3)
         async function handleLogin(event) {
             event.preventDefault();
@@ -1381,56 +1389,8 @@
             }
         }
 
-        // معالجة تسجيل شركة جديدة سحابياً بالكامل (Rule 1 & Rule 3)
-        async function handleRegister(event) {
-            event.preventDefault();
-            hideErrorBanner();
-            if (!firebaseInitialized) {
-                showErrorBanner("تعذر الاتصال بالنظام السحابي. تحقق من اتصالك بالإنترنت ثم أعد تحميل الصفحة.");
-                return;
-            }
-            const compName = document.getElementById("reg-company-name").value.trim();
-            const username = document.getElementById("reg-username").value.trim().toLowerCase();
-            const pass = document.getElementById("reg-password").value;
-
-            // التحقق من صلاحية اسم المستخدم قبل إرساله للخادم لتجنب أخطاء غير مفهومة
-            if (!/^[a-z0-9][a-z0-9._-]{2,}$/.test(username)) {
-                showErrorBanner("اسم المستخدم يجب أن يكون بالأحرف الإنجليزية أو الأرقام (3 خانات على الأقل) بدون مسافات.");
-                return;
-            }
-
-            setFormBusy(event.target, true);
-            try {
-                const email = `${username}@saas-erp.com`;
-                const userCredential = await auth.createUserWithEmailAndPassword(email, pass);
-                const fbUser = userCredential.user;
-
-                activeCompany = { id: username, uid: fbUser.uid, name: compName };
-
-                // حفظ ملف تعريف الشركة السحابية
-                await db.collection('artifacts').doc(appId).collection('users').doc(fbUser.uid).collection('profile').doc('meta').set({
-                    name: compName,
-                    username: username
-                });
-
-                companyData = {
-                    name: compName,
-                    employees: [],
-                    vehicles: [],
-                    contracts: [],
-                    orders: []
-                };
-
-                await saveCompanyDataToFirebase();
-                triggerToast("تم إنشاء حساب الشركة السحابي بنجاح!");
-                launchApplication();
-            } catch (error) {
-                console.error(error);
-                showErrorBanner(describeAuthError(error));
-            } finally {
-                setFormBusy(event.target, false);
-            }
-        }
+        // ملاحظة: إنشاء حسابات الشركات يتم يدوياً من لوحة Firebase:
+        // Authentication ← Users ← Add user، بالبريد بصيغة username@saas-erp.com
 
         // شحن وتحميل بيانات الموظفين والسيارات من Firebase Firestore (Rule 1 & Rule 2 compliant)
         async function loadCompanyDataFromFirebase() {
@@ -1442,13 +1402,15 @@
                 const vehsSnapshot = await db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('vehicles').get();
                 const consSnapshot = await db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('contracts').get();
                 const ordsSnapshot = await db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('orders').get();
+                const extrasDoc = await db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('profile').doc('driverExtras').get();
 
                 companyData = {
                     name: activeCompany.name,
                     employees: empsSnapshot.docs.map(doc => doc.data()),
                     vehicles: vehsSnapshot.docs.map(doc => doc.data()),
                     contracts: consSnapshot.docs.map(doc => doc.data()),
-                    orders: ordsSnapshot.docs.map(doc => doc.data())
+                    orders: ordsSnapshot.docs.map(doc => doc.data()),
+                    driverExtras: extrasDoc.exists ? (extrasDoc.data().data || {}) : {}
                 };
 
                 if (!companyData.employees) companyData.employees = [];
@@ -1504,6 +1466,12 @@
                         hasOperations = true;
                     }
                 }
+                if (companyData.driverExtras) {
+                    // المبالغ الإجمالية اليدوية لتقرير السائقين الشهري
+                    const extrasRef = db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('profile').doc('driverExtras');
+                    batch.set(extrasRef, { data: companyData.driverExtras });
+                    hasOperations = true;
+                }
 
                 if (hasOperations) {
                     await batch.commit();
@@ -1531,6 +1499,7 @@
             renderVehicles();
             renderContracts();
             renderOrders();
+            renderDriverReport();
             calculateFinancials();
             renderDashboardAlerts();
             updateDashboardKPIs();
@@ -2261,6 +2230,109 @@
                 saveCompanyDataToStorage();
                 refreshAllData();
             }
+        }
+
+
+        /* ======================== تقرير السائقين الشهري ======================== */
+        // أسماء السائقين المعروضين حالياً في التقرير (للربط مع أزرار الحفظ والإضافة)
+        let currentReportDrivers = [];
+
+        function renderDriverReport() {
+            const monthInput = document.getElementById("report-month");
+            if (!monthInput.value) {
+                monthInput.value = new Date().toISOString().slice(0, 7);
+            }
+            const month = monthInput.value;
+            if (!companyData.driverExtras) companyData.driverExtras = {};
+            const extras = companyData.driverExtras[month] || {};
+
+            // اتحاد أسماء السائقين: الموظفون المسجلون + أي سائق ورد اسمه في الطلبات
+            const names = [];
+            companyData.employees.forEach(e => { if (e.name && !names.includes(e.name)) names.push(e.name); });
+            companyData.orders.forEach(o => { if (o.driver && !names.includes(o.driver)) names.push(o.driver); });
+            currentReportDrivers = names;
+
+            const body = document.getElementById("driver-report-table-body");
+            body.innerHTML = "";
+
+            let totalOrders = 0, totalAmount = 0, grandTotal = 0;
+
+            if (names.length === 0) {
+                body.innerHTML = emptyTableRow(6, "لا يوجد سائقون بعد — أضف موظفين أو طلبات توصيل أولاً");
+            }
+
+            names.forEach((name, idx) => {
+                const monthOrders = companyData.orders.filter(o => o.driver === name && (o.datetime || "").startsWith(month));
+                const count = monthOrders.length;
+                const amount = monthOrders.reduce((acc, o) => acc + (parseFloat(o.amount) || 0), 0);
+                const extra = parseFloat(extras[name]) || 0;
+                const rowTotal = amount + extra;
+                totalOrders += count;
+                totalAmount += amount;
+                grandTotal += rowTotal;
+
+                const tr = document.createElement("tr");
+                tr.className = "border-b border-slate-150 hover:bg-slate-50 transition";
+                tr.innerHTML = `
+                    <td class="p-3 font-bold text-slate-800">${esc(name)}</td>
+                    <td class="p-3 text-center"><span class="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full font-black">${count} طلب</span></td>
+                    <td class="p-3 font-bold text-emerald-700">${fmt(amount)} د.ك</td>
+                    <td class="p-3">
+                        <input type="number" step="any" min="0" id="extra-input-${idx}" value="${extra || ''}" placeholder="0" class="w-28 p-2 border border-slate-200 rounded font-mono text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </td>
+                    <td class="p-3 font-black text-slate-900">${fmt(rowTotal)} د.ك</td>
+                    <td class="p-3 text-center">
+                        <div class="flex justify-center gap-1.5 flex-wrap">
+                            <button onclick="saveDriverExtra(${idx})" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1.5 rounded text-[10px] font-bold transition" title="حفظ المبلغ الإجمالي اليدوي">
+                                <i class="fas fa-save ml-0.5"></i> حفظ المبلغ
+                            </button>
+                            <button onclick="addOrderForDriver(${idx})" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded text-[10px] font-bold transition" title="تسجيل طلب جديد بمبلغه لهذا السائق">
+                                <i class="fas fa-plus ml-0.5"></i> إضافة طلب
+                            </button>
+                        </div>
+                    </td>
+                `;
+                body.appendChild(tr);
+            });
+
+            document.getElementById("report-total-orders").innerText = totalOrders;
+            document.getElementById("report-total-amount").innerText = fmt(totalAmount) + " د.ك";
+            document.getElementById("report-grand-total").innerText = fmt(grandTotal) + " د.ك";
+        }
+
+        // حفظ المبلغ الإجمالي اليدوي للسائق في الشهر المحدد (يُخزن سحابياً)
+        function saveDriverExtra(idx) {
+            const name = currentReportDrivers[idx];
+            const month = document.getElementById("report-month").value;
+            const value = parseFloat(document.getElementById("extra-input-" + idx).value) || 0;
+
+            if (!companyData.driverExtras) companyData.driverExtras = {};
+            if (!companyData.driverExtras[month]) companyData.driverExtras[month] = {};
+            if (value > 0) {
+                companyData.driverExtras[month][name] = value;
+            } else {
+                delete companyData.driverExtras[month][name];
+            }
+
+            saveCompanyDataToStorage();
+            renderDriverReport();
+            triggerToast("تم حفظ المبلغ الإجمالي للسائق: " + name);
+        }
+
+        // فتح نافذة طلب جديد مع اختيار السائق وشهر التقرير مسبقاً
+        function addOrderForDriver(idx) {
+            const name = currentReportDrivers[idx];
+            const month = document.getElementById("report-month").value;
+            openOrderModal();
+
+            const driverSelect = document.getElementById("ord-driver");
+            driverSelect.value = name;
+            // سائق ورد في الطلبات فقط وليس ضمن الموظفين الحاليين — نضيفه كخيار مؤقت
+            if (driverSelect.value !== name) {
+                driverSelect.innerHTML += `<option value="${esc(name)}">${esc(name)}</option>`;
+                driverSelect.value = name;
+            }
+            document.getElementById("ord-datetime").value = month + "-01T09:00";
         }
 
 
