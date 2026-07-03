@@ -1278,6 +1278,21 @@
                 const fbUser = userCredential.user;
                 activeCompany = { id: username, uid: fbUser.uid, name: defaultName };
                 await loadCompanyDataFromFirebase();
+
+                // إذا كان الحساب التجريبي موجوداً لكن سحابته فارغة (أُنشئ قبل تفعيل Firestore)
+                // نزرع البيانات التجريبية الافتراضية الآن حتى لا تفتح اللوحة فارغة
+                const isCloudEmpty = !companyData.employees.length && !companyData.vehicles.length
+                    && !companyData.contracts.length && !companyData.orders.length;
+                if (isCloudEmpty && defaultCompanyDatabases[username]) {
+                    companyData = JSON.parse(JSON.stringify(defaultCompanyDatabases[username]));
+                    await db.collection('artifacts').doc(appId).collection('users').doc(fbUser.uid).collection('profile').doc('meta').set({
+                        name: defaultName,
+                        username: username
+                    });
+                    await saveCompanyDataToFirebase();
+                    triggerToast("تم تجهيز البيانات التجريبية لحساب الشركة");
+                }
+
                 launchApplication();
             } catch (err) {
                 if (err.code === 'auth/operation-not-allowed') {
