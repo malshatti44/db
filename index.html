@@ -361,7 +361,7 @@
                     <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
                         <div>
                             <h3 class="text-md font-black text-slate-800"><i class="fas fa-car text-emerald-600 ml-2"></i>إدارة الأسطول وسيارات الشركة</h3>
-                            <p class="text-xs text-slate-400 mt-1">متابعة صيانة السيارات، كروت الصحة للسيارات، والعدادات والتأمين</p>
+                            <p class="text-xs text-slate-400 mt-1">متابعة صيانة السيارات، كروت الصحة، تراخيص الإعلان، والعدادات والتأمين</p>
                         </div>
                         <div class="flex gap-2 w-full md:w-auto">
                             <!-- محرك البحث الخاص بجدول السيارات -->
@@ -384,10 +384,10 @@
                                     <th class="p-3 font-black">موديل السيارة</th>
                                     <th class="p-3 font-black">انتهاء التأمين</th>
                                     <th class="p-3 font-black">تاريخ كرت الصحي</th>
+                                    <th class="p-3 font-black">ترخيص الإعلان</th>
                                     <th class="p-3 font-black">العداد الحالي (كم)</th>
                                     <th class="p-3 font-black">آخر صيانة</th>
-                                    <th class="p-3 font-black">ملاحظات صيانة مركبة</th>
-                                    <th class="p-3 font-black">ملاحظات عامة</th>
+                                    <th class="p-3 font-black">ملاحظة صيانة</th>
                                     <th class="p-3 font-black text-center">العمليات</th>
                                 </tr>
                             </thead>
@@ -902,21 +902,24 @@
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
+                        <label class="block mb-1 text-slate-500">تاريخ ترخيص الإعلان</label>
+                        <input type="date" id="veh-ad-license" class="w-full p-2 border border-slate-200 rounded font-mono">
+                    </div>
+                    <div>
                         <label class="block mb-1 text-slate-500">عداد المسافة الحالي (كم)</label>
                         <input type="number" id="veh-odom" required class="w-full p-2 border border-slate-200 rounded font-mono">
                     </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block mb-1 text-slate-500">تاريخ آخر صيانة</label>
                         <input type="date" id="veh-last-maint" required class="w-full p-2 border border-slate-200 rounded font-mono">
                     </div>
+                    <div></div>
                 </div>
                 <div>
-                    <label class="block mb-1 text-slate-500">ملاحظات صيانة مركبة والقطع المستبدلة</label>
+                    <label class="block mb-1 text-slate-500">ملاحظة صيانة المركبة والقطع المستبدلة</label>
                     <textarea id="veh-maint-notes" rows="2" class="w-full p-2 border border-slate-200 rounded"></textarea>
-                </div>
-                <div>
-                    <label class="block mb-1 text-slate-500">ملاحظات عامة</label>
-                    <textarea id="veh-notes" rows="2" class="w-full p-2 border border-slate-200 rounded"></textarea>
                 </div>
                 <div class="flex justify-end space-x-2 space-x-reverse pt-3 border-t border-slate-100">
                     <button type="button" onclick="closeVehicleModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg">إلغاء</button>
@@ -1117,9 +1120,9 @@
                     { id: "EMP-103", name: "سالم شاهين الشمري", civil: "295091802953", position: "سائق توزيع باص", phone: "55998822", resExpiry: "2026-06-30", insExpiry: "2026-07-20", plate: "3/77889", salary: 420, note: "تأمين طبي فئة أ" }
                 ],
                 vehicles: [
-                    { plate: "1/54321", model: "تويوتا هايلكس 2024", insExpiry: "2027-02-15", healthCard: "2026-12-01", odom: 35400, lastMaint: "2026-05-10", maintNotes: "تبديل زيت وفلاتر", notes: "حالة ممتازة" },
-                    { plate: "5/98765", model: "مرسيدس أكتروس شاحنة", insExpiry: "2026-07-10", healthCard: "2026-08-20", odom: 184500, lastMaint: "2026-04-18", maintNotes: "صيانة المكابح والإطارات", notes: "شاحنة ثقيلة" },
-                    { plate: "3/77889", model: "نيسان أورفان باص 2023", insExpiry: "2026-12-25", healthCard: "2026-06-28", odom: 62000, lastMaint: "2026-05-25", maintNotes: "فريون وصيانة تكييف", notes: "مستلمة بالكامل" }
+                    { plate: "1/54321", model: "تويوتا هايلكس 2024", insExpiry: "2027-02-15", healthCard: "2026-12-01", odom: 35400, lastMaint: "2026-05-10", adLicense: "2026-10-01", maintNotes: "تبديل زيت وفلاتر" },
+                    { plate: "5/98765", model: "مرسيدس أكتروس شاحنة", insExpiry: "2026-07-10", healthCard: "2026-08-20", odom: 184500, lastMaint: "2026-04-18", adLicense: "2026-08-15", maintNotes: "صيانة المكابح والإطارات" },
+                    { plate: "3/77889", model: "نيسان أورفان باص 2023", insExpiry: "2026-12-25", healthCard: "2026-06-28", odom: 62000, lastMaint: "2026-05-25", adLicense: "2027-01-10", maintNotes: "فريون وصيانة تكييف" }
                 ],
                 contracts: [
                     { num: "CON-F-01", entity: "مؤسسة الرعاية السكنية", duration: "سنتين", from: "2026-01-01", to: "2027-12-31", installments: 12, firstPay: "2026-01-15", nextPay: "2026-07-15", total: 45000, due: 15000, remaining: 30000, status: "نشط" },
@@ -1136,7 +1139,7 @@
                     { id: "EMP-202", name: "جاسم فضلي العنزي", civil: "294082203921", position: "سائق توزيع أول", phone: "60077889", resExpiry: "2026-06-22", insExpiry: "2026-06-28", plate: "بلا عهدة", salary: 400, note: "بحاجة لتحديث رخصة القيادة" }
                 ],
                 vehicles: [
-                    { plate: "4/22114", model: "فورد ترانزيت باص 2022", insExpiry: "2026-11-15", healthCard: "2026-10-10", odom: 98400, lastMaint: "2026-05-02", maintNotes: "تبديل المساعدات الأمامية والزيوت", notes: "حالة جيدة" }
+                    { plate: "4/22114", model: "فورد ترانزيت باص 2022", insExpiry: "2026-11-15", healthCard: "2026-10-10", odom: 98400, lastMaint: "2026-05-02", adLicense: "2026-09-20", maintNotes: "تبديل المساعدات الأمامية والزيوت" }
                 ],
                 contracts: [
                     { num: "CON-G-01", entity: "شركة النفط الكويتية KOC", duration: "سنة", from: "2026-02-15", to: "2027-02-14", installments: 6, firstPay: "2026-03-01", nextPay: "2026-07-01", total: 60000, due: 20000, remaining: 40000, status: "نشط" }
@@ -2034,10 +2037,10 @@
                     <td class="p-3 font-semibold">${esc(veh.model)}</td>
                     <td class="p-3 font-mono">${esc(veh.insExpiry)}</td>
                     <td class="p-3 font-mono">${esc(veh.healthCard)}</td>
+                    <td class="p-3 font-mono">${esc(veh.adLicense) || '-'}</td>
                     <td class="p-3 font-mono font-bold">${fmt(veh.odom)}</td>
                     <td class="p-3 font-mono">${esc(veh.lastMaint)}</td>
                     <td class="p-3 text-slate-600">${esc(veh.maintNotes) || '-'}</td>
-                    <td class="p-3 text-slate-500">${esc(veh.notes) || '-'}</td>
                     <td class="p-3 text-center">
                         <div class="flex justify-center space-x-1 space-x-reverse">
                             <button onclick="editVehicle(${index})" class="text-blue-600 hover:text-blue-800 p-1"><i class="fas fa-edit"></i></button>
@@ -2078,10 +2081,10 @@
                 document.getElementById("veh-model").value = veh.model;
                 document.getElementById("veh-ins-expiry").value = veh.insExpiry;
                 document.getElementById("veh-health-card").value = veh.healthCard;
+                document.getElementById("veh-ad-license").value = veh.adLicense || "";
                 document.getElementById("veh-odom").value = veh.odom;
                 document.getElementById("veh-last-maint").value = veh.lastMaint;
                 document.getElementById("veh-maint-notes").value = veh.maintNotes || "";
-                document.getElementById("veh-notes").value = veh.notes || "";
             } else {
                 title.innerText = "إضافة سيارة جديدة للشركة";
                 form.reset();
@@ -2102,10 +2105,10 @@
             const model = document.getElementById("veh-model").value;
             const insExpiry = document.getElementById("veh-ins-expiry").value;
             const healthCard = document.getElementById("veh-health-card").value;
+            const adLicense = document.getElementById("veh-ad-license").value;
             const odom = parseInt(document.getElementById("veh-odom").value) || 0;
             const lastMaint = document.getElementById("veh-last-maint").value;
             const maintNotes = document.getElementById("veh-maint-notes").value;
-            const notes = document.getElementById("veh-notes").value;
 
             if (index !== "") {
                 // عند تغيير رقم اللوحة نحذف المستند القديم من السحابة حتى لا تتكرر السيارة
@@ -2113,10 +2116,10 @@
                 if (oldPlate !== plate && auth.currentUser) {
                     db.collection('artifacts').doc(appId).collection('users').doc(auth.currentUser.uid).collection('vehicles').doc(oldPlate.replace(/\//g, '_')).delete().catch(err => console.error(err));
                 }
-                companyData.vehicles[index] = { plate, model, insExpiry, healthCard, odom, lastMaint, maintNotes, notes };
+                companyData.vehicles[index] = { plate, model, insExpiry, healthCard, adLicense, odom, lastMaint, maintNotes };
                 triggerToast("تم تعديل السيارة بالأسطول بنجاح");
             } else {
-                companyData.vehicles.push({ plate, model, insExpiry, healthCard, odom, lastMaint, maintNotes, notes });
+                companyData.vehicles.push({ plate, model, insExpiry, healthCard, adLicense, odom, lastMaint, maintNotes });
                 triggerToast("تم تسجيل السيارة الجديدة بمستندات الشركة");
             }
             saveCompanyDataToStorage();
@@ -2859,10 +2862,10 @@
                     <td>${esc(v.model)}</td>
                     <td>${esc(v.insExpiry)}</td>
                     <td>${esc(v.healthCard)}</td>
+                    <td>${esc(v.adLicense) || '-'}</td>
                     <td>${fmt(v.odom)}</td>
                     <td>${esc(v.lastMaint)}</td>
                     <td>${esc(v.maintNotes) || '-'}</td>
-                    <td>${esc(v.notes) || '-'}</td>
                 </tr>`;
             });
             const html = `
@@ -2870,7 +2873,7 @@
                 <p style="text-align:center; font-size:9pt; color:#555;">تاريخ الإصدار: ${new Date().toLocaleDateString('ar-KW')} — إجمالي المركبات: ${companyData.vehicles.length}</p>
                 <table>
                     <thead>
-                        <tr><th>#</th><th>رقم اللوحة</th><th>الموديل</th><th>انتهاء التأمين</th><th>الكرت الصحي</th><th>العداد (كم)</th><th>آخر صيانة</th><th>ملاحظات الصيانة</th><th>ملاحظات عامة</th></tr>
+                        <tr><th>#</th><th>رقم اللوحة</th><th>الموديل</th><th>انتهاء التأمين</th><th>الكرت الصحي</th><th>ترخيص الإعلان</th><th>العداد (كم)</th><th>آخر صيانة</th><th>ملاحظة الصيانة</th></tr>
                     </thead>
                     <tbody>${rows}</tbody>
                 </table>
