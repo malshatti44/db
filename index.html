@@ -361,7 +361,7 @@
                     <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
                         <div>
                             <h3 class="text-md font-black text-slate-800"><i class="fas fa-car text-emerald-600 ml-2"></i>إدارة الأسطول وسيارات الشركة</h3>
-                            <p class="text-xs text-slate-400 mt-1">متابعة صيانة السيارات، كروت الصحة، تراخيص الإعلان، والعدادات والتأمين</p>
+                            <p class="text-xs text-slate-400 mt-1">متابعة صيانة السيارات، هيئة الغذاء، تراخيص الإعلان، والعدادات والتأمين</p>
                         </div>
                         <div class="flex gap-2 w-full md:w-auto">
                             <!-- محرك البحث الخاص بجدول السيارات -->
@@ -383,7 +383,7 @@
                                     <th class="p-3 font-black">رقم اللوحة</th>
                                     <th class="p-3 font-black">موديل السيارة</th>
                                     <th class="p-3 font-black">انتهاء التأمين</th>
-                                    <th class="p-3 font-black">تاريخ كرت الصحي</th>
+                                    <th class="p-3 font-black">هيئة الغذاء</th>
                                     <th class="p-3 font-black">ترخيص الإعلان</th>
                                     <th class="p-3 font-black">العداد الحالي (كم)</th>
                                     <th class="p-3 font-black">آخر صيانة</th>
@@ -896,7 +896,7 @@
                         <input type="date" id="veh-ins-expiry" required class="w-full p-2 border border-slate-200 rounded font-mono">
                     </div>
                     <div>
-                        <label class="block mb-1 text-slate-500">تاريخ كرت الصحي للسيارة</label>
+                        <label class="block mb-1 text-slate-500">تاريخ هيئة الغذاء</label>
                         <input type="date" id="veh-health-card" required class="w-full p-2 border border-slate-200 rounded font-mono">
                     </div>
                 </div>
@@ -2074,7 +2074,7 @@
             const form = document.getElementById("vehicle-form");
 
             if (index !== null) {
-                title.innerText = "تعديل بيانات المركبة والكرت الصحي";
+                title.innerText = "تعديل بيانات المركبة وهيئة الغذاء";
                 const veh = companyData.vehicles[index];
                 document.getElementById("veh-index").value = index;
                 document.getElementById("veh-plate").value = veh.plate;
@@ -2873,7 +2873,7 @@
                 <p style="text-align:center; font-size:9pt; color:#555;">تاريخ الإصدار: ${new Date().toLocaleDateString('ar-KW')} — إجمالي المركبات: ${companyData.vehicles.length}</p>
                 <table>
                     <thead>
-                        <tr><th>#</th><th>رقم اللوحة</th><th>الموديل</th><th>انتهاء التأمين</th><th>الكرت الصحي</th><th>ترخيص الإعلان</th><th>العداد (كم)</th><th>آخر صيانة</th><th>ملاحظة الصيانة</th></tr>
+                        <tr><th>#</th><th>رقم اللوحة</th><th>الموديل</th><th>انتهاء التأمين</th><th>هيئة الغذاء</th><th>ترخيص الإعلان</th><th>العداد (كم)</th><th>آخر صيانة</th><th>ملاحظة الصيانة</th></tr>
                     </thead>
                     <tbody>${rows}</tbody>
                 </table>
