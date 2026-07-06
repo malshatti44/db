@@ -340,6 +340,7 @@
                                     <th class="p-3 font-black">رقم الموظف</th>
                                     <th class="p-3 font-black">اسم الموظف</th>
                                     <th class="p-3 font-black">الرقم المدني</th>
+                                    <th class="p-3 font-black">رقم ID</th>
                                     <th class="p-3 font-black">المسمى الوظيفي</th>
                                     <th class="p-3 font-black">رقم التلفون</th>
                                     <th class="p-3 font-black">انتهاء الإقامة</th>
@@ -570,6 +571,7 @@
                                 <h4 class="text-xs font-black text-slate-700 border-b border-slate-100 pb-2 mb-3"><i class="fas fa-user-circle text-emerald-500 ml-2"></i>بيانات الاتصال والهوية</h4>
                                 <ul class="space-y-3 text-[11px] font-bold">
                                     <li class="flex justify-between"><span class="text-slate-400">الرقم المدني:</span> <span class="font-bold text-slate-800" id="prof-civil">-</span></li>
+                                    <li class="flex justify-between"><span class="text-slate-400">رقم ID:</span> <span class="font-bold text-slate-800 font-mono" id="prof-id-number">-</span></li>
                                     <li class="flex justify-between"><span class="text-slate-400">رقم الهاتف:</span> <span class="font-bold text-slate-800" id="prof-phone">-</span></li>
                                     <li class="flex justify-between"><span class="text-slate-400">إجمالي مهام التوصيل:</span> <span class="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded" id="prof-orders-count">0 طلب</span></li>
                                 </ul>
@@ -829,13 +831,17 @@
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block mb-1 text-slate-500">المسمى الوظيفي</label>
-                        <input type="text" id="emp-position" required class="w-full p-2 border border-slate-200 rounded">
+                        <label class="block mb-1 text-slate-500">رقم ID (حتى 10 أرقام)</label>
+                        <input type="text" id="emp-id-number" inputmode="numeric" maxlength="10" pattern="[0-9]*" placeholder="0000000000" class="w-full p-2 border border-slate-200 rounded font-mono tracking-widest">
                     </div>
                     <div>
                         <label class="block mb-1 text-slate-500">رقم الهاتف</label>
                         <input type="text" id="emp-phone" required class="w-full p-2 border border-slate-200 rounded font-mono">
                     </div>
+                </div>
+                <div>
+                    <label class="block mb-1 text-slate-500">المسمى الوظيفي</label>
+                    <input type="text" id="emp-position" required class="w-full p-2 border border-slate-200 rounded">
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
@@ -1891,7 +1897,7 @@
             body.innerHTML = "";
 
             if (companyData.employees.length === 0) {
-                body.innerHTML = emptyTableRow(10, "لا يوجد موظفون بعد — اضغط زر (إضافة موظف جديد) للبدء");
+                body.innerHTML = emptyTableRow(11, "لا يوجد موظفون بعد — اضغط زر (إضافة موظف جديد) للبدء");
                 return;
             }
 
@@ -1902,6 +1908,7 @@
                     <td class="p-3 font-bold text-slate-700">${esc(emp.id)}</td>
                     <td class="p-3 font-semibold">${esc(emp.name)}</td>
                     <td class="p-3 font-mono">${esc(emp.civil)}</td>
+                    <td class="p-3 font-mono">${esc(emp.idNumber) || '-'}</td>
                     <td class="p-3 text-emerald-850 font-bold">${esc(emp.position)}</td>
                     <td class="p-3 font-mono">${esc(emp.phone)}</td>
                     <td class="p-3 font-mono">${esc(emp.resExpiry)}</td>
@@ -1952,6 +1959,7 @@
                 document.getElementById("emp-index").value = index;
                 document.getElementById("emp-name").value = emp.name;
                 document.getElementById("emp-civil").value = emp.civil;
+                document.getElementById("emp-id-number").value = emp.idNumber || "";
                 document.getElementById("emp-position").value = emp.position;
                 document.getElementById("emp-phone").value = emp.phone;
                 document.getElementById("emp-res-expiry").value = emp.resExpiry;
@@ -1977,6 +1985,7 @@
             const index = document.getElementById("emp-index").value;
             const name = document.getElementById("emp-name").value;
             const civil = document.getElementById("emp-civil").value;
+            const idNumber = document.getElementById("emp-id-number").value.trim();
             const position = document.getElementById("emp-position").value;
             const phone = document.getElementById("emp-phone").value;
             const resExpiry = document.getElementById("emp-res-expiry").value;
@@ -1986,12 +1995,12 @@
             const note = document.getElementById("emp-note").value;
 
             if (index !== "") {
-                companyData.employees[index] = { ...companyData.employees[index], name, civil, position, phone, resExpiry, insExpiry, plate, salary, note };
+                companyData.employees[index] = { ...companyData.employees[index], name, civil, idNumber, position, phone, resExpiry, insExpiry, plate, salary, note };
                 triggerToast("تم تعديل بيانات الموظف بنجاح");
             } else {
                 // معرف فريد مبني على الوقت لتجنب تكرار أرقام الموظفين
                 const newId = `EMP-${Date.now().toString().slice(-6)}`;
-                companyData.employees.push({ id: newId, name, civil, position, phone, resExpiry, insExpiry, plate, salary, note });
+                companyData.employees.push({ id: newId, name, civil, idNumber, position, phone, resExpiry, insExpiry, plate, salary, note });
                 triggerToast("تمت إضافة الموظف الجديد لقائمتنا");
             }
             saveCompanyDataToStorage();
@@ -2678,6 +2687,7 @@
             document.getElementById("prof-id").innerText = emp.id;
             document.getElementById("prof-salary").innerText = fmt(emp.salary) + " د.ك";
             document.getElementById("prof-civil").innerText = emp.civil;
+            document.getElementById("prof-id-number").innerText = emp.idNumber || "-";
             document.getElementById("prof-phone").innerText = emp.phone;
 
             const count = companyData.orders.filter(o => o.driver === emp.name).length;
@@ -2826,6 +2836,7 @@
                     <td>${esc(e.id)}</td>
                     <td>${esc(e.name)}</td>
                     <td>${esc(e.civil)}</td>
+                    <td>${esc(e.idNumber) || '-'}</td>
                     <td>${esc(e.position)}</td>
                     <td>${esc(e.phone)}</td>
                     <td>${esc(e.resExpiry)}</td>
@@ -2840,7 +2851,7 @@
                 <p style="text-align:center; font-size:9pt; color:#555;">تاريخ الإصدار: ${new Date().toLocaleDateString('ar-KW')} — إجمالي الموظفين: ${companyData.employees.length}</p>
                 <table>
                     <thead>
-                        <tr><th>#</th><th>رقم الموظف</th><th>اسم الموظف</th><th>الرقم المدني</th><th>المسمى الوظيفي</th><th>الهاتف</th><th>انتهاء الإقامة</th><th>انتهاء التأمين</th><th>لوحة السيارة</th><th>الراتب</th><th>ملاحظات</th></tr>
+                        <tr><th>#</th><th>رقم الموظف</th><th>اسم الموظف</th><th>الرقم المدني</th><th>رقم ID</th><th>المسمى الوظيفي</th><th>الهاتف</th><th>انتهاء الإقامة</th><th>انتهاء التأمين</th><th>لوحة السيارة</th><th>الراتب</th><th>ملاحظات</th></tr>
                     </thead>
                     <tbody>${rows}</tbody>
                 </table>
@@ -3140,6 +3151,7 @@
                     <li><strong>المسمى الوظيفي:</strong> ${emp.position}</li>
                     <li><strong>الراتب الشهري الأساسي:</strong> ${fmt(emp.salary)} دينار كويتي</li>
                     <li><strong>الرقم المدني الكويتي:</strong> ${emp.civil}</li>
+                    <li><strong>رقم ID:</strong> ${esc(emp.idNumber) || '-'}</li>
                     <li><strong>رقم الهاتف النقال:</strong> ${emp.phone}</li>
                 </ul>
 
