@@ -337,16 +337,15 @@
                         <table class="w-full text-right text-xs border-collapse">
                             <thead>
                                 <tr class="bg-slate-50 text-slate-600 border-b border-slate-200">
-                                    <th class="p-3 font-black">رقم الموظف</th>
                                     <th class="p-3 font-black">اسم الموظف</th>
                                     <th class="p-3 font-black">الرقم المدني</th>
                                     <th class="p-3 font-black">رقم ID</th>
                                     <th class="p-3 font-black">المسمى الوظيفي</th>
                                     <th class="p-3 font-black">رقم التلفون</th>
                                     <th class="p-3 font-black">انتهاء الإقامة</th>
-                                    <th class="p-3 font-black">انتهاء التأمين الصحي</th>
                                     <th class="p-3 font-black">لوحة السيارة</th>
                                     <th class="p-3 font-black">الراتب (د.ك)</th>
+                                    <th class="p-3 font-black">ملاحظات</th>
                                     <th class="p-3 font-black text-center">العمليات</th>
                                 </tr>
                             </thead>
@@ -556,7 +555,6 @@
                                     <p class="text-emerald-700 font-bold text-xs mt-1 flex items-center gap-1">
                                         <i class="fas fa-briefcase"></i> <span id="prof-position">المسمى الوظيفي</span>
                                     </p>
-                                    <p class="text-[10px] text-slate-400 mt-1">رقم المعرف الفريد داخل النظام: <span id="prof-id" class="font-mono font-bold">#</span></p>
                                 </div>
                             </div>
                             <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-150 text-left w-full md:w-auto self-stretch flex flex-col justify-center">
@@ -592,7 +590,6 @@
                                 <h4 class="text-xs font-black text-slate-700 border-b border-slate-100 pb-2 mb-3"><i class="fas fa-calendar-alt text-emerald-500 ml-2"></i>التواريخ والوثائق الحيوية</h4>
                                 <ul class="space-y-3 text-[11px] font-bold">
                                     <li class="flex justify-between"><span class="text-slate-400">انتهاء الإقامة:</span> <span class="font-bold rounded px-1.5 py-0.5" id="prof-res-expiry">-</span></li>
-                                    <li class="flex justify-between"><span class="text-slate-400">انتهاء التأمين الصحي:</span> <span class="font-bold" id="prof-ins-expiry">-</span></li>
                                     <li class="flex justify-between"><span class="text-slate-400">حالة الإقامة:</span> <span id="prof-res-status" class="font-bold">-</span></li>
                                 </ul>
                             </div>
@@ -849,21 +846,18 @@
                         <input type="date" id="emp-res-expiry" required class="w-full p-2 border border-slate-200 rounded font-mono">
                     </div>
                     <div>
-                        <label class="block mb-1 text-slate-500">تاريخ انتهاء التأمين الصحي</label>
-                        <input type="date" id="emp-ins-expiry" required class="w-full p-2 border border-slate-200 rounded font-mono">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
                         <label class="block mb-1 text-slate-500">لوحة السيارة المسندة</label>
                         <select id="emp-car-plate" class="w-full p-2 border border-slate-200 rounded bg-white">
                             <!-- المتاح لسيارات الشركة النشطة -->
                         </select>
                     </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block mb-1 text-slate-500">الراتب الشهري (د.ك)</label>
-                        <input type="number" id="emp-salary" required class="w-full p-2 border border-slate-200 rounded font-mono">
+                        <label class="block mb-1 text-slate-500">الراتب الشهري (د.ك) — اختياري</label>
+                        <input type="number" step="any" min="0" id="emp-salary" placeholder="اتركه فارغاً إن لم ترغب بتحديده" class="w-full p-2 border border-slate-200 rounded font-mono">
                     </div>
+                    <div></div>
                 </div>
                 <div>
                     <label class="block mb-1 text-slate-500">ملاحظة</label>
@@ -1905,16 +1899,15 @@
                 const tr = document.createElement("tr");
                 tr.className = "border-b border-slate-150 hover:bg-slate-50 transition";
                 tr.innerHTML = `
-                    <td class="p-3 font-bold text-slate-700">${esc(emp.id)}</td>
                     <td class="p-3 font-semibold">${esc(emp.name)}</td>
                     <td class="p-3 font-mono">${esc(emp.civil)}</td>
                     <td class="p-3 font-mono">${esc(emp.idNumber) || '-'}</td>
                     <td class="p-3 text-emerald-850 font-bold">${esc(emp.position)}</td>
                     <td class="p-3 font-mono">${esc(emp.phone)}</td>
                     <td class="p-3 font-mono">${esc(emp.resExpiry)}</td>
-                    <td class="p-3 font-mono">${esc(emp.insExpiry)}</td>
                     <td class="p-3"><span class="bg-slate-100 text-slate-700 px-2.5 py-1 rounded font-mono font-bold">${esc(emp.plate)}</span></td>
-                    <td class="p-3 font-bold">${fmt(emp.salary)} د.ك</td>
+                    <td class="p-3 font-bold">${parseFloat(emp.salary) ? fmt(emp.salary) + ' د.ك' : '-'}</td>
+                    <td class="p-3 text-slate-600">${esc(emp.note) || '-'}</td>
                     <td class="p-3 text-center">
                         <div class="flex justify-center space-x-1 space-x-reverse">
                             <button onclick="editEmployee(${index})" class="text-blue-600 hover:text-blue-800 p-1"><i class="fas fa-edit"></i></button>
@@ -1963,9 +1956,8 @@
                 document.getElementById("emp-position").value = emp.position;
                 document.getElementById("emp-phone").value = emp.phone;
                 document.getElementById("emp-res-expiry").value = emp.resExpiry;
-                document.getElementById("emp-ins-expiry").value = emp.insExpiry;
                 document.getElementById("emp-car-plate").value = emp.plate;
-                document.getElementById("emp-salary").value = emp.salary;
+                document.getElementById("emp-salary").value = emp.salary || "";
                 document.getElementById("emp-note").value = emp.note || "";
             } else {
                 title.innerText = "إضافة موظف جديد لشركتنا";
@@ -1989,18 +1981,17 @@
             const position = document.getElementById("emp-position").value;
             const phone = document.getElementById("emp-phone").value;
             const resExpiry = document.getElementById("emp-res-expiry").value;
-            const insExpiry = document.getElementById("emp-ins-expiry").value;
             const plate = document.getElementById("emp-car-plate").value;
             const salary = parseFloat(document.getElementById("emp-salary").value) || 0;
             const note = document.getElementById("emp-note").value;
 
             if (index !== "") {
-                companyData.employees[index] = { ...companyData.employees[index], name, civil, idNumber, position, phone, resExpiry, insExpiry, plate, salary, note };
+                companyData.employees[index] = { ...companyData.employees[index], name, civil, idNumber, position, phone, resExpiry, plate, salary, note };
                 triggerToast("تم تعديل بيانات الموظف بنجاح");
             } else {
-                // معرف فريد مبني على الوقت لتجنب تكرار أرقام الموظفين
+                // معرف فريد داخلي مبني على الوقت (يستخدم للتخزين السحابي فقط ولا يظهر بالواجهة)
                 const newId = `EMP-${Date.now().toString().slice(-6)}`;
-                companyData.employees.push({ id: newId, name, civil, idNumber, position, phone, resExpiry, insExpiry, plate, salary, note });
+                companyData.employees.push({ id: newId, name, civil, idNumber, position, phone, resExpiry, plate, salary, note });
                 triggerToast("تمت إضافة الموظف الجديد لقائمتنا");
             }
             saveCompanyDataToStorage();
@@ -2672,7 +2663,7 @@
                 return;
             }
             companyData.employees.forEach(emp => {
-                selector.innerHTML += `<option value="${esc(emp.id)}">${esc(emp.name)} [ID: ${esc(emp.id)}]</option>`;
+                selector.innerHTML += `<option value="${esc(emp.id)}">${esc(emp.name)}</option>`;
             });
         }
 
@@ -2684,8 +2675,7 @@
             document.getElementById("prof-initials").innerText = emp.name.charAt(0);
             document.getElementById("prof-name").innerText = emp.name;
             document.getElementById("prof-position").innerText = emp.position;
-            document.getElementById("prof-id").innerText = emp.id;
-            document.getElementById("prof-salary").innerText = fmt(emp.salary) + " د.ك";
+            document.getElementById("prof-salary").innerText = parseFloat(emp.salary) ? fmt(emp.salary) + " د.ك" : "غير محدد";
             document.getElementById("prof-civil").innerText = emp.civil;
             document.getElementById("prof-id-number").innerText = emp.idNumber || "-";
             document.getElementById("prof-phone").innerText = emp.phone;
@@ -2724,7 +2714,6 @@
                 resStatusSpan.className = "font-bold text-green-600";
             }
 
-            document.getElementById("prof-ins-expiry").innerText = emp.insExpiry;
         }
 
 
@@ -2833,16 +2822,14 @@
             companyData.employees.forEach((e, i) => {
                 rows += `<tr>
                     <td>${i + 1}</td>
-                    <td>${esc(e.id)}</td>
                     <td>${esc(e.name)}</td>
                     <td>${esc(e.civil)}</td>
                     <td>${esc(e.idNumber) || '-'}</td>
                     <td>${esc(e.position)}</td>
                     <td>${esc(e.phone)}</td>
                     <td>${esc(e.resExpiry)}</td>
-                    <td>${esc(e.insExpiry)}</td>
                     <td>${esc(e.plate)}</td>
-                    <td>${fmt(e.salary)} د.ك</td>
+                    <td>${parseFloat(e.salary) ? fmt(e.salary) + ' د.ك' : '-'}</td>
                     <td>${esc(e.note) || '-'}</td>
                 </tr>`;
             });
@@ -2851,7 +2838,7 @@
                 <p style="text-align:center; font-size:9pt; color:#555;">تاريخ الإصدار: ${new Date().toLocaleDateString('ar-KW')} — إجمالي الموظفين: ${companyData.employees.length}</p>
                 <table>
                     <thead>
-                        <tr><th>#</th><th>رقم الموظف</th><th>اسم الموظف</th><th>الرقم المدني</th><th>رقم ID</th><th>المسمى الوظيفي</th><th>الهاتف</th><th>انتهاء الإقامة</th><th>انتهاء التأمين</th><th>لوحة السيارة</th><th>الراتب</th><th>ملاحظات</th></tr>
+                        <tr><th>#</th><th>اسم الموظف</th><th>الرقم المدني</th><th>رقم ID</th><th>المسمى الوظيفي</th><th>الهاتف</th><th>انتهاء الإقامة</th><th>لوحة السيارة</th><th>الراتب</th><th>ملاحظات</th></tr>
                     </thead>
                     <tbody>${rows}</tbody>
                 </table>
@@ -3031,7 +3018,7 @@
                     <table>
                         <tr><th>Employee Name</th><td>${esc(emp.name)}</td></tr>
                         <tr><th>Civil ID No.</th><td>${esc(emp.civil)}</td></tr>
-                        <tr><th>Employee ID</th><td>${esc(emp.id)}</td></tr>
+                        <tr><th>ID No.</th><td>${esc(emp.idNumber) || "-"}</td></tr>
                         <tr><th>Job Title</th><td>${esc(emp.position)}</td></tr>
                         <tr><th>Contact Number</th><td>${esc(emp.phone)}</td></tr>
                     </table>
@@ -3066,7 +3053,7 @@
                     <table>
                         <tr><th>اسم الموظف</th><td>${esc(emp.name)}</td></tr>
                         <tr><th>الرقم المدني</th><td>${esc(emp.civil)}</td></tr>
-                        <tr><th>الرقم الوظيفي</th><td>${esc(emp.id)}</td></tr>
+                        <tr><th>رقم ID</th><td>${esc(emp.idNumber) || "-"}</td></tr>
                         <tr><th>المسمى الوظيفي</th><td>${esc(emp.position)}</td></tr>
                         <tr><th>رقم التواصل</th><td>${esc(emp.phone)}</td></tr>
                     </table>
@@ -3144,12 +3131,11 @@
                 <h1>ملخص السيرة الذاتية والبيانات الفردية للموظف</h1>
                 <p style="text-align: center; font-weight: bold; color: gray;">خاص بشركة: ${activeCompany.name}</p>
                 <p><strong>الاسم بالكامل:</strong> ${emp.name}</p>
-                <p><strong>الرقم المعرف الفريد:</strong> ${emp.id}</p>
-                
+                                
                 <h3>بيانات العمل والمالية:</h3>
                 <ul>
                     <li><strong>المسمى الوظيفي:</strong> ${emp.position}</li>
-                    <li><strong>الراتب الشهري الأساسي:</strong> ${fmt(emp.salary)} دينار كويتي</li>
+                    <li><strong>الراتب الشهري الأساسي:</strong> ${parseFloat(emp.salary) ? fmt(emp.salary) + ' دينار كويتي' : 'غير محدد'}</li>
                     <li><strong>الرقم المدني الكويتي:</strong> ${emp.civil}</li>
                     <li><strong>رقم ID:</strong> ${esc(emp.idNumber) || '-'}</li>
                     <li><strong>رقم الهاتف النقال:</strong> ${emp.phone}</li>
@@ -3164,8 +3150,7 @@
                 <h3>التواريخ والوثائق القانونية:</h3>
                 <ul>
                     <li><strong>تاريخ انتهاء الإقامة:</strong> ${emp.resExpiry}</li>
-                    <li><strong>تاريخ انتهاء التأمين الصحي للكويت:</strong> ${emp.insExpiry}</li>
-                </ul>
+                                    </ul>
             `;
             exportToWord(`ملف_الموظف_${emp.name.replace(/ /g, '_')}`, html);
         }
