@@ -668,7 +668,7 @@
                     <h3 class="text-md font-black text-slate-800 mb-1"><i class="fas fa-file-word text-blue-600 ml-2"></i>توليد وطباعة مستندات Word لشركتك</h3>
                     <p class="text-xs text-slate-400 mb-6">احصل على مستندات مجهزة بشعار وتفاصيل شركتك المسجلة حالياً لتفتح مباشرة على برنامج Microsoft Word</p>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
                         <!-- نموذج تصدير عقد -->
                         <div class="border border-slate-200 p-5 rounded-xl bg-slate-50">
                             <div class="text-blue-600 mb-3"><i class="fas fa-file-signature fa-2x"></i></div>
@@ -708,6 +708,29 @@
                             </div>
                             <button onclick="exportVehicleHandoverToWord()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-bold transition flex items-center justify-center gap-1">
                                 <i class="fas fa-download"></i> تصدير إقرار العهدة إلى Word
+                            </button>
+                        </div>
+
+                        <!-- إقرار استلام عهدة مالية ID -->
+                        <div class="border border-slate-200 p-5 rounded-xl bg-slate-50">
+                            <div class="text-amber-600 mb-3"><i class="fas fa-wallet fa-2x"></i></div>
+                            <h4 class="font-bold text-slate-800 text-sm mb-2">إقرار استلام عهدة ID (مالية)</h4>
+                            <p class="text-[11px] text-slate-400 mb-4">إقرار استلام جهاز ID بمحفظة ومبلغ مالي وشنطة حمل غذاء وتي شيرت، بتعهدات إرجاع الكاش دورياً.</p>
+                            <div class="space-y-3 mb-4">
+                                <label class="block text-[10px] font-bold text-slate-500">اختر الموظف المستلم</label>
+                                <select id="word-id-custody-selector" class="w-full p-2 border border-slate-300 rounded text-xs bg-white font-bold">
+                                    <!-- سيتم الملء ديناميكياً -->
+                                </select>
+                                <label class="block text-[10px] font-bold text-slate-500">المبلغ داخل المحفظة (د.ك)</label>
+                                <input type="number" step="any" min="0" id="word-id-amount" placeholder="مثال: 200" class="w-full p-2 border border-slate-300 rounded text-xs bg-white font-mono font-bold">
+                                <label class="block text-[10px] font-bold text-slate-500">لغة المستند</label>
+                                <select id="word-id-lang" class="w-full p-2 border border-slate-300 rounded text-xs bg-white font-bold">
+                                    <option value="ar">العربية</option>
+                                    <option value="en">English</option>
+                                </select>
+                            </div>
+                            <button onclick="exportIdCustodyToWord()" class="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white rounded text-xs font-bold transition flex items-center justify-center gap-1">
+                                <i class="fas fa-download"></i> تصدير إقرار عهدة ID
                             </button>
                         </div>
 
@@ -857,7 +880,10 @@
                         <label class="block mb-1 text-slate-500">الراتب الشهري (د.ك) — اختياري</label>
                         <input type="number" step="any" min="0" id="emp-salary" placeholder="اتركه فارغاً إن لم ترغب بتحديده" class="w-full p-2 border border-slate-200 rounded font-mono">
                     </div>
-                    <div></div>
+                    <div>
+                        <label class="block mb-1 text-slate-500">الجنسية — تظهر في إقرارات العهدة</label>
+                        <input type="text" id="emp-nationality" placeholder="مثال: مصري" class="w-full p-2 border border-slate-200 rounded">
+                    </div>
                 </div>
                 <div>
                     <label class="block mb-1 text-slate-500">ملاحظة</label>
@@ -1254,6 +1280,22 @@
                 .replace(/>/g, "&gt;")
                 .replace(/"/g, "&quot;")
                 .replace(/'/g, "&#039;");
+        }
+
+        // عدد الأيام المتبقية حتى تاريخ معين (سالب إذا انتهى)
+        function daysUntil(dateStr) {
+            if (!dateStr) return NaN;
+            return Math.ceil((new Date(dateStr) - new Date()) / (1000 * 60 * 60 * 24));
+        }
+
+        // تلوين التواريخ قريبة الانتهاء: برتقالي قبل شهر، وأحمر عندما يبقى أقل من 7 أيام أو انتهى
+        function dateBadge(dateStr) {
+            const days = daysUntil(dateStr);
+            const safe = esc(dateStr) || '-';
+            if (isNaN(days)) return safe;
+            if (days < 7) return `<span class="bg-rose-100 text-rose-800 font-bold px-1.5 py-0.5 rounded">${safe}</span>`;
+            if (days <= 30) return `<span class="bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded">${safe}</span>`;
+            return safe;
         }
 
         // تنسيق موحد للأرقام والمبالغ المالية في كل الشاشات والتقارير
@@ -1790,6 +1832,24 @@
                 }
             });
 
+            // تنبيه السيارات التي لم يُجرَ لها سيرفس (صيانة) منذ 30 يوماً أو أكثر
+            companyData.vehicles.forEach(veh => {
+                if (!veh.lastMaint) return;
+                const daysSince = Math.floor((today - new Date(veh.lastMaint)) / (1000 * 60 * 60 * 24));
+                if (daysSince >= 30) {
+                    const alertDiv = document.createElement("div");
+                    alertDiv.className = "p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 flex items-center justify-between text-xs";
+                    alertDiv.innerHTML = `
+                        <div>
+                            <p class="font-bold"><i class="fas fa-wrench ml-1"></i> صيانة مطلوبة — السيارة: ${esc(veh.plate)} (${esc(veh.model)})</p>
+                            <p class="mt-0.5 text-[10px] opacity-80">آخر سيرفس: ${esc(veh.lastMaint)} — مضى ${daysSince} يوماً بدون صيانة</p>
+                        </div>
+                        <button onclick="switchTab('vehicles')" class="px-2.5 py-1 bg-white hover:bg-slate-150 rounded font-bold shadow-xs">جدولة صيانة</button>
+                    `;
+                    container.appendChild(alertDiv);
+                }
+            });
+
             // تنبيهات العقود المتأخرة في السداد
             companyData.contracts.forEach(con => {
                 if (con.status === "تأخير في السداد") {
@@ -1904,7 +1964,7 @@
                     <td class="p-3 font-mono">${esc(emp.idNumber) || '-'}</td>
                     <td class="p-3 text-emerald-850 font-bold">${esc(emp.position)}</td>
                     <td class="p-3 font-mono">${esc(emp.phone)}</td>
-                    <td class="p-3 font-mono">${esc(emp.resExpiry)}</td>
+                    <td class="p-3 font-mono">${dateBadge(emp.resExpiry)}</td>
                     <td class="p-3"><span class="bg-slate-100 text-slate-700 px-2.5 py-1 rounded font-mono font-bold">${esc(emp.plate)}</span></td>
                     <td class="p-3 font-bold">${parseFloat(emp.salary) ? fmt(emp.salary) + ' د.ك' : '-'}</td>
                     <td class="p-3 text-slate-600">${esc(emp.note) || '-'}</td>
@@ -1958,6 +2018,7 @@
                 document.getElementById("emp-res-expiry").value = emp.resExpiry;
                 document.getElementById("emp-car-plate").value = emp.plate;
                 document.getElementById("emp-salary").value = emp.salary || "";
+                document.getElementById("emp-nationality").value = emp.nationality || "";
                 document.getElementById("emp-note").value = emp.note || "";
             } else {
                 title.innerText = "إضافة موظف جديد لشركتنا";
@@ -1983,15 +2044,23 @@
             const resExpiry = document.getElementById("emp-res-expiry").value;
             const plate = document.getElementById("emp-car-plate").value;
             const salary = parseFloat(document.getElementById("emp-salary").value) || 0;
+            const nationality = document.getElementById("emp-nationality").value.trim();
             const note = document.getElementById("emp-note").value;
 
+            // الرقم المدني هو المعرف الفريد للموظف — لا يجوز تكراره بين الموظفين
+            const duplicate = companyData.employees.some((e, i) => String(e.civil).trim() === String(civil).trim() && String(i) !== index);
+            if (duplicate) {
+                triggerToast("الرقم المدني مسجل مسبقاً لموظف آخر — لا يمكن تكراره", true);
+                return;
+            }
+
             if (index !== "") {
-                companyData.employees[index] = { ...companyData.employees[index], name, civil, idNumber, position, phone, resExpiry, plate, salary, note };
+                companyData.employees[index] = { ...companyData.employees[index], name, civil, idNumber, position, phone, resExpiry, plate, salary, nationality, note };
                 triggerToast("تم تعديل بيانات الموظف بنجاح");
             } else {
                 // معرف فريد داخلي مبني على الوقت (يستخدم للتخزين السحابي فقط ولا يظهر بالواجهة)
                 const newId = `EMP-${Date.now().toString().slice(-6)}`;
-                companyData.employees.push({ id: newId, name, civil, idNumber, position, phone, resExpiry, plate, salary, note });
+                companyData.employees.push({ id: newId, name, civil, idNumber, position, phone, resExpiry, plate, salary, nationality, note });
                 triggerToast("تمت إضافة الموظف الجديد لقائمتنا");
             }
             saveCompanyDataToStorage();
@@ -2035,9 +2104,9 @@
                     <td class="p-3 font-bold text-slate-500">${index + 1}</td>
                     <td class="p-3 font-mono font-bold text-emerald-700">${esc(veh.plate)}</td>
                     <td class="p-3 font-semibold">${esc(veh.model)}</td>
-                    <td class="p-3 font-mono">${esc(veh.insExpiry)}</td>
-                    <td class="p-3 font-mono">${esc(veh.healthCard)}</td>
-                    <td class="p-3 font-mono">${esc(veh.adLicense) || '-'}</td>
+                    <td class="p-3 font-mono">${dateBadge(veh.insExpiry)}</td>
+                    <td class="p-3 font-mono">${dateBadge(veh.healthCard)}</td>
+                    <td class="p-3 font-mono">${dateBadge(veh.adLicense)}</td>
                     <td class="p-3 font-mono font-bold">${fmt(veh.odom)}</td>
                     <td class="p-3 font-mono">${esc(veh.lastMaint)}</td>
                     <td class="p-3 text-slate-600">${esc(veh.maintNotes) || '-'}</td>
@@ -2172,10 +2241,10 @@
                     <td class="p-3 font-bold text-slate-800">${esc(con.entity)}</td>
                     <td class="p-3">${esc(con.duration)}</td>
                     <td class="p-3 font-mono">${esc(con.from)}</td>
-                    <td class="p-3 font-mono">${esc(con.to)}</td>
+                    <td class="p-3 font-mono">${dateBadge(con.to)}</td>
                     <td class="p-3 text-center font-bold">${fmt(con.installments)}</td>
                     <td class="p-3 font-mono">${esc(con.firstPay)}</td>
-                    <td class="p-3 font-mono text-amber-600 font-bold">${esc(con.nextPay)}</td>
+                    <td class="p-3 font-mono font-bold">${dateBadge(con.nextPay)}</td>
                     <td class="p-3 font-bold">${fmt(con.total)} د.ك</td>
                     <td class="p-3 font-bold text-emerald-600">${fmt(con.due)} د.ك</td>
                     <td class="p-3 font-bold text-rose-500">${fmt(con.remaining)} د.ك</td>
@@ -2731,6 +2800,12 @@
             companyData.employees.forEach(emp => {
                 empCarSel.innerHTML += `<option value="${esc(emp.id)}">${esc(emp.name)} [لوحة: ${esc(emp.plate)}]</option>`;
             });
+
+            const idCustodySel = document.getElementById("word-id-custody-selector");
+            idCustodySel.innerHTML = companyData.employees.length === 0 ? `<option value="">لا يوجد موظفون مسجلون بعد</option>` : "";
+            companyData.employees.forEach(emp => {
+                idCustodySel.innerHTML += `<option value="${esc(emp.id)}">${esc(emp.name)} [${esc(emp.civil)}]</option>`;
+            });
         }
 
         // ترويسة رسمية للمستندات: الشعار + اسم الشركة + رقم الترخيص
@@ -3004,81 +3079,158 @@
             const veh = companyData.vehicles.find(v => v.plate === emp.plate) || { model: lang === 'en' ? "N/A" : "غير محدد", odom: 0, insExpiry: "-", lastMaint: "-" };
             const p = companyData.profile || {};
             const compName = p.name || activeCompany.name;
-            const today = new Date().toISOString().slice(0, 10);
+            const now = new Date();
+            const today = now.toISOString().slice(0, 10);
+            const timeStr = now.toLocaleTimeString('ar-KW', { hour: '2-digit', minute: '2-digit' });
+            const dots = '..........................';
 
             let html;
             if (lang === 'en') {
                 html = `
-                    <h1>VEHICLE CUSTODY &amp; HANDOVER ACKNOWLEDGMENT</h1>
-                    <p style="text-align:center; font-size:9pt; color:#555;">Issued by: ${esc(compName)} — Date: ${today}</p>
+                    <h1>VEHICLE CUSTODY ACKNOWLEDGMENT</h1>
+                    <p style="text-align:center; font-size:9pt; color:#555;">Date: ${today} — Time: ${now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} &nbsp;&nbsp;|&nbsp;&nbsp; Return Date: ____ / ____ / ________</p>
 
-                    <p class="clause">I, the undersigned, hereby acknowledge that I have received from <b>${esc(compName)}</b> the vehicle described below in good working condition, as a work custody, and I undertake to preserve it, use it solely for work purposes, perform maintenance on schedule, bear any traffic violations committed during my custody, and return it upon request or upon the end of my employment.</p>
-
-                    <h3>Employee (Recipient) Details</h3>
+                    <p class="clause">I, the undersigned / <b>${esc(emp.name)}</b></p>
                     <table>
-                        <tr><th>Employee Name</th><td>${esc(emp.name)}</td></tr>
-                        <tr><th>Civil ID No.</th><td>${esc(emp.civil)}</td></tr>
-                        <tr><th>ID No.</th><td>${esc(emp.idNumber) || "-"}</td></tr>
+                        <tr><th>Nationality</th><td>${esc(emp.nationality) || dots}</td></tr>
+                        <tr><th>Civil ID No. (Unique Identifier)</th><td>${esc(emp.civil)}</td></tr>
                         <tr><th>Job Title</th><td>${esc(emp.position)}</td></tr>
-                        <tr><th>Contact Number</th><td>${esc(emp.phone)}</td></tr>
                     </table>
+
+                    <p class="clause">hereby acknowledge that I have received the following custody from <b>${esc(compName)}</b>: the vehicle described below, for the purpose of delivering consumer orders / work duties, and I undertake to:</p>
+                    <p class="clause">1. Preserve the vehicle and not use it for any purpose other than its designated work purposes. Should it be proven that I used it outside work, I accept any penalty determined by the Company.</p>
+                    <p class="clause">2. Bear all repair costs and expenses should it be proven that I caused the damage, and bear all traffic violations incurred on the vehicle from the date of receipt until its return to the Company.</p>
+                    <p class="clause">3. I acknowledge that I am civilly and criminally liable before all authorities within the State of Kuwait.</p>
+                    <p class="clause">4. In the event of any problem, I shall notify the Management immediately.</p>
+                    <p class="clause">This is my acknowledgment thereof.</p>
 
                     <h3>Vehicle Details</h3>
                     <table>
-                        <tr><th>Plate Number</th><td>${esc(emp.plate)}</td></tr>
-                        <tr><th>Make / Model</th><td>${esc(veh.model)}</td></tr>
-                        <tr><th>Odometer Reading at Handover</th><td>${fmt(veh.odom)} km</td></tr>
-                        <tr><th>Insurance Expiry Date</th><td>${esc(veh.insExpiry)}</td></tr>
-                        <tr><th>Last Maintenance Date</th><td>${esc(veh.lastMaint)}</td></tr>
+                        <tr><th>1</th><th>Vehicle Type / Model</th><td>${esc(veh.model)}</td></tr>
+                        <tr><th>2</th><th>Plate Number</th><td>${esc(emp.plate)}</td></tr>
+                        <tr><th>3</th><th>Body Style</th><td>${dots}</td></tr>
+                        <tr><th>4</th><th>Color</th><td>${dots}</td></tr>
+                        <tr><th>5</th><th>Odometer at Handover</th><td>${fmt(veh.odom)} km</td></tr>
+                        <tr><th>6</th><th>Insurance Expiry</th><td>${esc(veh.insExpiry)}</td></tr>
                     </table>
-
-                    <p class="clause">This acknowledgment has been executed in accordance with the laws of the State of Kuwait, in two counterparts, one retained by the Company and one by the Employee.</p>
 
                     <br/>
                     <table style="border:none;">
                         <tr>
-                            <td style="border:none; text-align:center;"><b>Employee (Recipient)</b><br/>${esc(emp.name)}<br/><br/>Signature: ______________________</td>
-                            <td style="border:none; text-align:center;"><b>Company Representative</b><br/>${esc(compName)}<br/><br/>Signature: ______________________</td>
+                            <td style="border:none; text-align:center;"><b>Recipient Signature</b><br/><br/>______________________<br/><br/>Fingerprint: ________</td>
+                            <td style="border:none; text-align:center;"><b>Supervisor Signature</b><br/>${esc(compName)}<br/><br/>______________________</td>
                         </tr>
                     </table>
                 `;
             } else {
                 html = `
-                    <h1>إقــرار ومحضـر تسليـم عهـدة مركبـة</h1>
-                    <p style="text-align:center; font-size:9pt; color:#555;">صادر عن: ${esc(compName)} — تاريخ التحرير: ${today}</p>
+                    <h1>الموضوع / إقرار استلام عهدة سيارة</h1>
+                    <p style="text-align:center; font-size:9pt; color:#555;">التاريخ: ${today} — الساعة: ${timeStr} &nbsp;&nbsp;|&nbsp;&nbsp; تاريخ التسليم: ____ / ____ / ________ — الساعة: ________</p>
 
-                    <p class="clause">أُقر أنا الموقّع أدناه بأنني تسلّمت من <b>${esc(compName)}</b> المركبة الموضحة بياناتها أدناه بحالة جيدة وصالحة للاستعمال، وذلك على سبيل عهدة العمل، وأتعهد بالمحافظة عليها واستخدامها في أغراض العمل فقط، وإجراء الصيانة الدورية في مواعيدها، وتحمّل ما يقع خلال فترة العهدة من مخالفات مرورية، وإعادتها فور طلبها أو عند انتهاء علاقة العمل.</p>
-
-                    <h3>بيانات الموظف (المستلم)</h3>
+                    <p class="clause">أقر أنا الموقع أدناه / <b>${esc(emp.name)}</b></p>
                     <table>
-                        <tr><th>اسم الموظف</th><td>${esc(emp.name)}</td></tr>
-                        <tr><th>الرقم المدني</th><td>${esc(emp.civil)}</td></tr>
-                        <tr><th>رقم ID</th><td>${esc(emp.idNumber) || "-"}</td></tr>
-                        <tr><th>المسمى الوظيفي</th><td>${esc(emp.position)}</td></tr>
-                        <tr><th>رقم التواصل</th><td>${esc(emp.phone)}</td></tr>
+                        <tr><th>الجنسية</th><td>${esc(emp.nationality) || dots}</td></tr>
+                        <tr><th>الرقم المدني (المعرف)</th><td>${esc(emp.civil)}</td></tr>
+                        <tr><th>الوظيفة</th><td>${esc(emp.position)}</td></tr>
                     </table>
 
-                    <h3>بيانات المركبة (العهدة)</h3>
-                    <table>
-                        <tr><th>رقم اللوحة</th><td>${esc(emp.plate)}</td></tr>
-                        <tr><th>النوع / الموديل</th><td>${esc(veh.model)}</td></tr>
-                        <tr><th>قراءة العداد عند التسليم</th><td>${fmt(veh.odom)} كم</td></tr>
-                        <tr><th>تاريخ انتهاء التأمين</th><td>${esc(veh.insExpiry)}</td></tr>
-                        <tr><th>تاريخ آخر صيانة</th><td>${esc(veh.lastMaint)}</td></tr>
-                    </table>
+                    <p class="clause">بأنني استلمت العهدة التالية من <b>${esc(compName)}</b>: وهي السيارة الموضحة بياناتها أدناه، وذلك من أجل استخدامها في توصيل الطلبات الاستهلاكية / أغراض العمل، وأتعهد بما يلي:</p>
+                    <p class="clause">1. المحافظة عليها وعدم استخدامها في غير الأغراض المخصصة لها خارج العمل، وإذا ثبت استخدامي لها خارج العمل فإنني أقر وأوافق على تحمل أي عقوبة تقرها الشركة.</p>
+                    <p class="clause">2. كما أقر بتحمل كافة تكاليف أو مصروفات إصلاحها في حال ثبت أنني المتسبب في ذلك، وأتحمل كافة المخالفات التي تقع على السيارة من تاريخ استلامها وحتى تاريخ تسليمها للشركة.</p>
+                    <p class="clause">3. وأقر بأنني مسؤول مسؤولية مدنية وجنائية أمام كافة الجهات داخل دولة الكويت.</p>
+                    <p class="clause">4. وفي حالة حدوث أي مشكلة أقوم بإبلاغ الإدارة فوراً.</p>
+                    <p class="clause"><b>وهذا إقرار مني بذلك.</b></p>
 
-                    <p class="clause">حُرر هذا الإقرار وفقاً للقوانين المعمول بها في دولة الكويت من نسختين، تحتفظ الشركة بنسخة ويحتفظ الموظف بالنسخة الأخرى.</p>
+                    <h3>بيانات السيارة</h3>
+                    <table>
+                        <tr><th>1</th><th>نوع السيارة / الموديل</th><td>${esc(veh.model)}</td></tr>
+                        <tr><th>2</th><th>رقم اللوحة</th><td>${esc(emp.plate)}</td></tr>
+                        <tr><th>3</th><th>الشكل</th><td>${dots}</td></tr>
+                        <tr><th>4</th><th>اللون</th><td>${dots}</td></tr>
+                        <tr><th>5</th><th>قراءة العداد عند الاستلام</th><td>${fmt(veh.odom)} كم</td></tr>
+                        <tr><th>6</th><th>انتهاء التأمين</th><td>${esc(veh.insExpiry)}</td></tr>
+                    </table>
 
                     <br/>
                     <table style="border:none;">
                         <tr>
-                            <td style="border:none; text-align:center;"><b>الموظف المستلم</b><br/>${esc(emp.name)}<br/><br/>التوقيع: ______________________</td>
-                            <td style="border:none; text-align:center;"><b>مسؤول الشركة</b><br/>${esc(compName)}<br/><br/>التوقيع: ______________________</td>
+                            <td style="border:none; text-align:center;"><b>توقيع المستلم</b><br/><br/>______________________<br/><br/>البصمة: ________</td>
+                            <td style="border:none; text-align:center;"><b>توقيع المسؤول</b><br/>${esc(compName)}<br/><br/>______________________</td>
                         </tr>
                     </table>
                 `;
             }
-            const fileName = (lang === 'en' ? 'Vehicle_Custody_' : 'إقرار_عهدة_') + emp.name.replace(/ /g, '_');
+            const fileName = (lang === 'en' ? 'Vehicle_Custody_' : 'إقرار_عهدة_سيارة_') + emp.name.replace(/ /g, '_');
+            exportToWord(fileName, html, { lang });
+        }
+
+        // إقرار استلام عهدة مالية (جهاز ID مع محفظة بمبلغ مالي)
+        function exportIdCustodyToWord() {
+            const empId = document.getElementById("word-id-custody-selector").value;
+            const emp = companyData.employees.find(e => e.id === empId);
+            if (!emp) {
+                triggerToast("لا يوجد موظف محدد للتصدير — أضف موظفاً أولاً", true);
+                return;
+            }
+            const amount = parseFloat(document.getElementById("word-id-amount").value) || 0;
+            const lang = document.getElementById("word-id-lang").value;
+            const p = companyData.profile || {};
+            const compName = p.name || activeCompany.name;
+            const now = new Date();
+            const today = now.toISOString().slice(0, 10);
+            const dots = '..........................';
+
+            let html;
+            if (lang === 'en') {
+                html = `
+                    <h1>FINANCIAL CUSTODY ACKNOWLEDGMENT (ID DEVICE)</h1>
+                    <p style="text-align:center; font-size:9pt; color:#555;">Date: ${today}</p>
+
+                    <p class="clause">I, the undersigned / <b>${esc(emp.name)}</b></p>
+                    <table>
+                        <tr><th>Nationality</th><td>${esc(emp.nationality) || dots}</td></tr>
+                        <tr><th>Civil ID No. (Unique Identifier)</th><td>${esc(emp.civil)}</td></tr>
+                        <tr><th>Job Title</th><td>${esc(emp.position)}</td></tr>
+                    </table>
+
+                    <p class="clause">hereby acknowledge that I have received the following custody from <b>${esc(compName)}</b>: an (ID device) containing a wallet with a cash amount of <b>(${fmt(amount)}) Kuwaiti Dinars only</b>, a food carrier bag, and a T-shirt, for the purpose of delivering consumer orders.</p>
+                    <p class="clause">I undertake to preserve the said amount and return it to the Company periodically upon closing the cash in the delivery application. I acknowledge and accept any penalty, and I shall be deemed to have committed breach of trust should I fail to hand over the said amount upon the termination of my employment with the Company.</p>
+                    <p class="clause">This is my acknowledgment thereof.</p>
+
+                    <br/>
+                    <table style="border:none;">
+                        <tr>
+                            <td style="border:none; text-align:center;"><b>Recipient Signature</b><br/><br/>______________________<br/><br/>Fingerprint: ________</td>
+                            <td style="border:none; text-align:center;"><b>Supervisor Signature</b><br/>${esc(compName)}<br/><br/>______________________</td>
+                        </tr>
+                    </table>
+                `;
+            } else {
+                html = `
+                    <h1>الموضوع / إقرار استلام عهدة مالية (ID)</h1>
+                    <p style="text-align:center; font-size:9pt; color:#555;">التاريخ: ${today}</p>
+
+                    <p class="clause">أقر أنا الموقع أدناه / <b>${esc(emp.name)}</b></p>
+                    <table>
+                        <tr><th>الجنسية</th><td>${esc(emp.nationality) || dots}</td></tr>
+                        <tr><th>الرقم المدني (المعرف)</th><td>${esc(emp.civil)}</td></tr>
+                        <tr><th>الوظيفة</th><td>${esc(emp.position)}</td></tr>
+                    </table>
+
+                    <p class="clause">بأنني استلمت العهدة التالية من <b>${esc(compName)}</b>: وهي جهاز (اي دي) يحتوي على محفظة بها مبلغ مالي قدره <b>(${fmt(amount)}) دينار كويتي فقط لا غير</b>، وشنطة حمل غذاء، وتي شيرت، وذلك من أجل استخدامه في توصيل الطلبات الاستهلاكية.</p>
+                    <p class="clause">وأتعهد بالمحافظة على المبلغ وإرجاعه إلى الشركة بصفة دورية في حالة قفل الكاش في برنامج الطلبات، وأقر وأوافق على تحمل أي عقوبة، وأُعدّ خائناً للأمانة في حالة عدم تسليم المبلغ المذكور عند إنهاء عملي بالشركة.</p>
+                    <p class="clause"><b>وهذا إقرار مني بذلك.</b></p>
+
+                    <br/>
+                    <table style="border:none;">
+                        <tr>
+                            <td style="border:none; text-align:center;"><b>توقيع المستلم</b><br/><br/>______________________<br/><br/>البصمة: ________</td>
+                            <td style="border:none; text-align:center;"><b>توقيع المسؤول</b><br/>${esc(compName)}<br/><br/>______________________</td>
+                        </tr>
+                    </table>
+                `;
+            }
+            const fileName = (lang === 'en' ? 'ID_Custody_' : 'إقرار_عهدة_ID_') + emp.name.replace(/ /g, '_');
             exportToWord(fileName, html, { lang });
         }
 
